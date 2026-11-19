@@ -87,7 +87,7 @@
       "target": [
         { "target": "deb", "arch": ["x64"] }
       ],
-      "artifactName": "FreeMD-${version}-linux-${arch}.${ext}"
+      "artifactName": "FreeMD-${version}-linux-x64.${ext}"
     },
     "mac": {
       "icon": "build/icon.png",
