@@ -1,6 +1,6 @@
 {
   "name": "freemd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "FreeMD — a focused Markdown reader and editor with automatic image, formula and section recognition.",
   "main": "src/main.js",
   "author": {

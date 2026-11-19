@@ -93,6 +93,7 @@ function createWindow() {
     minHeight: 600,
     show: false,
     title: APP_NAME,
+    icon: path.join(__dirname, 'renderer', 'assets', 'logo.png'),
     backgroundColor: ensureSettings().theme === 'dark' ? '#12141a' : '#f6f5f2',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
