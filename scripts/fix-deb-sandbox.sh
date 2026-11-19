@@ -47,7 +47,8 @@ chown root:root "$SANDBOX"
 chmod 4755 "$SANDBOX"
 
 echo "重新打包 $DEB"
-dpkg-deb -b "$WORK/pkg" "$DEB" >/dev/null
+# 显式用 xz：dpkg 从 1.21 起默认 zstd，老系统的 dpkg 不认 zstd 压缩的 deb
+dpkg-deb -Zxz -z9 -b "$WORK/pkg" "$DEB" >/dev/null
 
 echo "校验："
 dpkg-deb -c "$DEB" | grep 'opt/FreeMD/chrome-sandbox'
