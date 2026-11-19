@@ -22,7 +22,7 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "pack:win": "electron-builder --win --x64 --publish never",
-    "pack:linux": "electron-builder --linux deb --x64 --publish never",
+    "pack:linux": "electron-builder --linux deb --x64 --publish never && sudo -n bash scripts/fix-deb-sandbox.sh",
     "dist": "electron-builder --publish never"
   },
   "devDependencies": {
@@ -88,6 +88,9 @@
         { "target": "deb", "arch": ["x64"] }
       ],
       "artifactName": "FreeMD-${version}-linux-x64.${ext}"
+    },
+    "deb": {
+      "afterInstall": "build/linux/after-install.tpl"
     },
     "mac": {
       "icon": "build/icon.png",

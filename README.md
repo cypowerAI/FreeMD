@@ -16,13 +16,33 @@ FreeMD 是一个基于 Electron 的桌面应用：左栏是章节大纲与文件
 | --- | --- | --- |
 | Windows | `FreeMD-1.0.0-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
 | Windows | `FreeMD-1.0.0-portable-x64.exe` | 免安装绿色版，双击即用 |
-| Linux (x64) | `FreeMD-1.0.0-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo dpkg -i` 安装 |
+| Linux (x64) | `FreeMD-1.0.0-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.0-linux-x64.deb` |
 | macOS (Intel) | `FreeMD-1.0.0-mac-x64.zip` | 解压后拖入「应用程序」 |
 | macOS (Apple Silicon) | `FreeMD-1.0.0-mac-arm64.zip` | 解压后拖入「应用程序」 |
 
 > macOS 版本未做代码签名。首次打开若提示「无法验证开发者」，请在「访达」中右键点击 FreeMD.app → 打开，或执行 `xattr -cr FreeMD.app` 后再启动。
 >
-> Linux 安装后若缺少系统依赖，可执行 `sudo apt-get install -y libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 xdg-utils libatspi2.0-0 libsecret-1-0`。
+> Linux 安装后若缺少系统依赖，可执行 `sudo apt-get install -y libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 xdg-utils libatspi2.0-0 libsecret-1-0`。安装后也可直接用终端命令 `freemd` 启动。
+
+### Linux 启动报 SUID sandbox 错误？
+
+如果启动时出现：
+
+```
+FATAL:setuid_sandbox_host.cc(163)] The SUID sandbox helper binary was found, but is not
+configured correctly. Rather than run without sandboxing I'm aborting now. You need to
+make sure that /opt/FreeMD/chrome-sandbox is owned by root and has mode 4755.
+```
+
+说明安装包里 `/opt/FreeMD/chrome-sandbox` 的权限不是 `root:root` + `4755`。Chromium 的 SUID sandbox helper 必须带 setuid 位；Ubuntu 23.10+/24.04、Debian 12 起默认用 AppArmor 限制非特权 user namespace，因此即使内核支持 user namespace，普通用户启动时仍会走 SUID helper。
+
+当前下载的安装包已修正该权限（打包脚本 `build/linux/after-install.tpl` + `scripts/fix-deb-sandbox.sh`）。**已经安装过旧包的用户**可以执行下面一条命令原地修复，或重新下载安装包覆盖安装：
+
+```bash
+sudo chown root:root /opt/FreeMD/chrome-sandbox && sudo chmod 4755 /opt/FreeMD/chrome-sandbox
+```
+
+`freemd --no-sandbox` 也能启动，但会关掉 Chromium 的沙箱隔离，仅建议临时验证使用。
 
 ---
 
@@ -96,6 +116,7 @@ npm run dev      # 启动应用并打开开发者工具
 npm run pack:win
 
 # Linux：deb 安装包（需在 Linux 上执行）
+# 打包后会调用 scripts/fix-deb-sandbox.sh 把 chrome-sandbox 修正为 root:root + 4755（需 sudo）
 npm run pack:linux
 
 # macOS：在 Linux / macOS 上生成免签名 zip

@@ -8,9 +8,19 @@
 | --- | --- | --- |
 | Windows | `FreeMD-1.0.0-win-x64.exe` | NSIS 安装程序，可选安装目录、创建桌面快捷方式，关联 `.md` 文件 |
 | Windows | `FreeMD-1.0.0-portable-x64.exe` | 免安装绿色版，双击即用 |
-| Linux (x64) | `FreeMD-1.0.0-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo dpkg -i` 安装 |
+| Linux (x64) | `FreeMD-1.0.0-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.0-linux-x64.deb` |
 | macOS (Intel) | `FreeMD-1.0.0-mac-x64.zip` | 解压后把 `FreeMD.app` 拖入「应用程序」 |
 | macOS (Apple Silicon) | `FreeMD-1.0.0-mac-arm64.zip` | 解压后把 `FreeMD.app` 拖入「应用程序」 |
+
+### Linux 安装说明
+
+安装后直接用桌面图标或终端命令 `freemd` 启动。若旧版安装包启动时报 `setuid_sandbox_host.cc(163) ... /opt/FreeMD/chrome-sandbox is owned by root and has mode 4755`，执行下面一条命令即可修复（或重新下载本页安装包覆盖安装）：
+
+```bash
+sudo chown root:root /opt/FreeMD/chrome-sandbox && sudo chmod 4755 /opt/FreeMD/chrome-sandbox
+```
+
+缺少系统依赖时：`sudo apt-get install -y libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 xdg-utils libatspi2.0-0 libsecret-1-0`。
 
 ### 功能
 
