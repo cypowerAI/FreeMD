@@ -1,0 +1,9 @@
+node_modules/
+src/renderer/vendor/
+release/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

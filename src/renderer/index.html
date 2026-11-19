@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' file:; script-src 'self' file:; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob:; font-src 'self' file: data:; connect-src 'self' file:;"
+    />
+    <title>FreeMD</title>
+    <link rel="stylesheet" href="vendor/codemirror/codemirror.css" />
+    <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+    <link rel="stylesheet" href="vendor/hljs/github.min.css" id="hljsTheme" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5.2c0-1 .8-1.8 1.8-1.8h12.4c1 0 1.8.8 1.8 1.8v13.6c0 1-.8 1.8-1.8 1.8H5.8c-1 0-1.8-.8-1.8-1.8V5.2Z" />
+              <path d="M12 8.4v7.2M8.4 12h7.2" class="mark-plus" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <strong>FreeMD</strong>
+            <span>Markdown Reader</span>
+          </div>
+        </div>
+
+        <div class="side-tabs" role="tablist">
+          <button class="side-tab is-active" data-panel="outline" role="tab">大纲</button>
+          <button class="side-tab" data-panel="files" role="tab">文件</button>
+          <button class="side-tab" data-panel="recent" role="tab">最近</button>
+        </div>
+
+        <div class="side-panels">
+          <section class="side-panel is-active" id="panel-outline">
+            <div class="panel-search">
+              <input id="outlineSearch" type="search" placeholder="筛选章节…" autocomplete="off" />
+            </div>
+            <div id="outlineList" class="outline"></div>
+            <div id="outlineEmpty" class="empty-hint">未识别到章节结构</div>
+          </section>
+
+          <section class="side-panel" id="panel-files">
+            <button id="openFolderBtn" class="ghost-btn wide">打开文件夹</button>
+            <div id="fileTree" class="file-tree"></div>
+            <div id="fileTreeEmpty" class="empty-hint">打开一个文件夹，浏览其中的 Markdown 文档</div>
+          </section>
+
+          <section class="side-panel" id="panel-recent">
+            <div id="recentList" class="recent-list"></div>
+            <button id="clearRecentBtn" class="ghost-btn wide">清空记录</button>
+          </section>
+        </div>
+
+        <div class="side-foot">
+          <button id="themeBtn" class="icon-btn" title="切换主题（Ctrl+Shift+L）" aria-label="切换主题">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-sun">
+              <circle cx="12" cy="12" r="4.2" />
+              <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.55 1.55M17.25 17.25l1.55 1.55M18.8 5.2l-1.55 1.55M6.75 17.25L5.2 18.8" />
+            </svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-moon">
+              <path d="M20 14.4A8.6 8.6 0 0 1 9.6 4a8.6 8.6 0 1 0 10.4 10.4Z" />
+            </svg>
+          </button>
+          <button id="openBtn" class="icon-btn" title="打开文件（Ctrl+O）" aria-label="打开文件">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3.5 6.8c0-1 .8-1.8 1.8-1.8h4l2 2.4h7.4c1 0 1.8.8 1.8 1.8v8.6c0 1-.8 1.8-1.8 1.8H5.3c-1 0-1.8-.8-1.8-1.8V6.8Z" />
+            </svg>
+          </button>
+          <span class="version" id="versionLabel"></span>
+        </div>
+      </aside>
+
+      <main id="main">
+        <header id="toolbar">
+          <div class="doc-head">
+            <h1 id="docTitle">未命名</h1>
+            <div class="doc-sub">
+              <span id="docPath" title="">未打开文件</span>
+              <span class="sep">·</span>
+              <span id="dirtyFlag" class="save-state">新建文档</span>
+            </div>
+          </div>
+
+          <div class="toolbar-right">
+            <div class="segmented" id="viewSwitch">
+              <button data-view="editor" title="仅编辑（Ctrl+1）">编辑</button>
+              <button data-view="split" class="is-active" title="分栏（Ctrl+2）">分栏</button>
+              <button data-view="preview" title="仅阅读（Ctrl+3）">阅读</button>
+            </div>
+            <button id="exportBtn" class="ghost-btn">导出 PDF</button>
+            <button id="saveBtn" class="primary-btn">保存</button>
+          </div>
+        </header>
+
+        <div id="workspace" data-view="split">
+          <section id="editorPane" class="pane pane-editor">
+            <div class="format-bar">
+              <button data-format="h1" title="一级标题">H1</button>
+              <button data-format="h2" title="二级标题">H2</button>
+              <span class="format-sep"></span>
+              <button data-format="bold" title="加粗"><b>B</b></button>
+              <button data-format="italic" title="斜体"><i class="italic-mark">I</i></button>
+              <button data-format="code" title="行内代码">代码</button>
+              <span class="format-sep"></span>
+              <button data-format="quote" title="引用">引用</button>
+              <button data-format="list" title="无序列表">列表</button>
+              <button data-format="link" title="链接">链接</button>
+              <button data-format="image" title="插入图片">图片</button>
+              <button data-format="math" title="插入公式">公式</button>
+            </div>
+            <div id="editor"></div>
+          </section>
+
+          <div id="divider" role="separator" aria-orientation="vertical"></div>
+
+          <section id="previewPane" class="pane pane-preview">
+            <div class="preview-top">
+              <span class="preview-label">阅读视图</span>
+              <div class="find-box" id="findBox" hidden>
+                <input id="findInput" type="search" placeholder="在文档中查找…" autocomplete="off" />
+                <span id="findCount">0/0</span>
+                <button id="findPrev" title="上一个">↑</button>
+                <button id="findNext" title="下一个">↓</button>
+                <button id="findClose" title="关闭">×</button>
+              </div>
+            </div>
+            <div id="previewScroll" class="preview-scroll">
+              <article id="preview" class="markdown-body"></article>
+            </div>
+          </section>
+        </div>
+
+        <footer id="statusbar">
+          <div class="status-left">
+            <span id="statSections"><em>0</em> 章节</span>
+            <span id="statImages"><em>0</em> 图片</span>
+            <span id="statMath"><em>0</em> 公式</span>
+            <span id="statWords"><em>0</em> 字</span>
+          </div>
+          <div class="status-right">
+            <span id="statCursor">行 1 · 列 1</span>
+            <span id="statMode">GFM</span>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <div id="lightbox" class="lightbox" hidden>
+      <img id="lightboxImg" alt="" />
+      <span class="lightbox-tip">点击任意处关闭 · 滚轮缩放</span>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="vendor/codemirror/codemirror.js"></script>
+    <script src="vendor/codemirror/xml.js"></script>
+    <script src="vendor/codemirror/javascript.js"></script>
+    <script src="vendor/codemirror/css.js"></script>
+    <script src="vendor/codemirror/markdown.js"></script>
+    <script src="vendor/codemirror/overlay.js"></script>
+    <script src="vendor/codemirror/gfm.js"></script>
+    <script src="vendor/codemirror/matchbrackets.js"></script>
+    <script src="vendor/codemirror/closebrackets.js"></script>
+    <script src="vendor/codemirror/active-line.js"></script>
+    <script src="vendor/markdown-it/markdown-it.min.js"></script>
+    <script src="vendor/dompurify/purify.min.js"></script>
+    <script src="vendor/katex/katex.min.js"></script>
+    <script src="vendor/hljs/highlight.min.js"></script>
+    <script src="markdown.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

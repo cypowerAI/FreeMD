@@ -1,0 +1,162 @@
+/* Print stylesheet used when exporting a document to PDF. */
+
+@page {
+  size: A4;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #16181c;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-size: 10.8pt;
+  line-height: 1.72;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.markdown-body {
+  max-width: none;
+  padding: 0 6mm;
+  font-size: inherit;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  color: #0f1115;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+.markdown-body h1 {
+  font-size: 19pt;
+  margin: 0 0 14pt;
+  padding-bottom: 8pt;
+  border-bottom: 1.5pt solid #0d7a6a;
+}
+
+.markdown-body h2 {
+  font-size: 14.5pt;
+  margin: 18pt 0 8pt;
+  padding-left: 8pt;
+  border-left: 3pt solid #0d7a6a;
+}
+
+.markdown-body h3 {
+  font-size: 12pt;
+  margin: 14pt 0 6pt;
+}
+
+.markdown-body p,
+.markdown-body li {
+  orphans: 3;
+  widows: 3;
+}
+
+.markdown-body p {
+  margin: 0 0 8pt;
+}
+
+.markdown-body a {
+  color: #0a5f53;
+  text-decoration: none;
+}
+
+.markdown-body pre {
+  padding: 8pt 10pt;
+  border: 0.5pt solid #d8d5cd;
+  background: #f6f5f1;
+  border-radius: 4pt;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.markdown-body pre code {
+  font-size: 8.8pt;
+  font-family: "JetBrains Mono", Consolas, "Liberation Mono", monospace;
+}
+
+.markdown-body code {
+  font-size: 9pt;
+  background: #f1efea;
+  padding: 0 2pt;
+  border-radius: 2pt;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.4pt;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 0.5pt solid #dedbd3;
+  padding: 5pt 7pt;
+}
+
+.markdown-body th {
+  background: #f6f5f1;
+}
+
+.markdown-body blockquote {
+  margin: 10pt 0;
+  padding: 2pt 0 2pt 10pt;
+  border-left: 2.5pt solid #9dcdc4;
+  color: #4b5158;
+  font-style: italic;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10pt auto;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  border-radius: 3pt;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 0.5pt solid #dedbd3;
+  margin: 14pt 0;
+}
+
+.markdown-body .sec-no {
+  color: #0d7a6a;
+  font-size: 0.72em;
+  margin-right: 0.4em;
+  font-family: Consolas, monospace;
+}
+
+.markdown-body .code-copy,
+.markdown-body .task-box {
+  display: none;
+}
+
+.markdown-body .doc-meta {
+  border-left: 2.5pt solid #0d7a6a;
+  background: #f4f8f6;
+  padding: 8pt 10pt;
+  margin-bottom: 16pt;
+  border-radius: 0 4pt 4pt 0;
+}
+
+.meta-row {
+  font-size: 9pt;
+  color: #4b5158;
+  padding: 2pt 0;
+}
+
+.meta-key {
+  display: inline-block;
+  width: 40pt;
+  color: #7b828b;
+}

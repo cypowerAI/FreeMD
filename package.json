@@ -1,0 +1,99 @@
+{
+  "name": "freemd",
+  "version": "1.0.0",
+  "description": "FreeMD — a focused Markdown reader and editor with automatic image, formula and section recognition.",
+  "main": "src/main.js",
+  "author": {
+    "name": "cypowerAI",
+    "email": "cypower@163.com"
+  },
+  "license": "GPL-3.0",
+  "homepage": "https://github.com/cypowerAI/FreeMD",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cypowerAI/FreeMD.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cypowerAI/FreeMD/issues"
+  },
+  "scripts": {
+    "vendor": "node scripts/prepare-vendor.js",
+    "postinstall": "node scripts/prepare-vendor.js",
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "pack:win": "electron-builder --win --x64 --publish never",
+    "pack:linux": "electron-builder --linux deb --x64 --publish never",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "@highlightjs/cdn-assets": "^11.10.0",
+    "codemirror": "^5.65.18",
+    "dompurify": "^3.1.6",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "katex": "^0.16.11",
+    "markdown-it": "^14.1.0"
+  },
+  "build": {
+    "appId": "ai.cypowerai.freemd",
+    "productName": "FreeMD",
+    "copyright": "Copyright © 2026 cypowerAI",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "LICENSE",
+      "!src/renderer/vendor/**/*.map",
+      "!**/*.md.bak"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["md", "markdown", "mdown", "mkd"],
+        "name": "Markdown Document",
+        "description": "Markdown document",
+        "role": "Editor"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "artifactName": "FreeMD-${version}-win-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FreeMD",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "FreeMD-${version}-portable-${arch}.${ext}"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Office",
+      "maintainer": "cypowerAI <cypower@163.com>",
+      "synopsis": "Markdown reader and editor",
+      "description": "FreeMD is a Markdown reader and editor with automatic detection of images, formulas and document sections, plus a section-based outline for navigation.",
+      "target": [
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "artifactName": "FreeMD-${version}-linux-${arch}.${ext}"
+    },
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "target": ["zip"],
+      "artifactName": "FreeMD-${version}-mac-${arch}.${ext}"
+    }
+  }
+}
