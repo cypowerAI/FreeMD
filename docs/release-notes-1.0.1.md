@@ -45,3 +45,11 @@ sudo chown root:root /opt/FreeMD/chrome-sandbox && sudo chmod 4755 /opt/FreeMD/c
 ### 校验
 
 各产物由本仓库 `main` 分支的对应 tag 构建。源码安装与二次打包见 [README](https://github.com/cypowerAI/FreeMD#本地开发)。
+
+### SHA256
+
+- `FreeMD-1.0.1-win-x64.exe` — `8ab3a4eb0b3951a42bbf9ee73259d55fa4e1b1eda449979243ffab67a4bc4164`
+- `FreeMD-1.0.1-portable-x64.exe` — `9d002312a953c12b8eb5b9a72eb99cb263b5f57efb43b14b2946b9e2d127aca4`
+- `FreeMD-1.0.1-linux-x64.deb` — `cc08054f2bd73d03f329d3439d549ced76e0eb78ac7787b74b3ae20b006b47bf`
+- `FreeMD-1.0.1-mac-x64.zip` — `cbfa16488e2ef46a08798ef87dc71f379e7393cdabc455dde59c1d7dfd07c65b`
+- `FreeMD-1.0.1-mac-arm64.zip` — `7883eae6680b1908004bc2d1302c5458c9b68f98d948cd0e2c157d5885d46711`
