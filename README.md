@@ -17,6 +17,7 @@ FreeMD 是一个基于 Electron 的桌面应用：左栏是章节大纲与文件
 | Windows | `FreeMD-1.0.2-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
 | Windows | `FreeMD-1.0.2-portable-x64.exe` | 免安装绿色版，双击即用 |
 | Linux (x64) | `FreeMD-1.0.2-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.2-linux-x64.deb` |
+| Linux (x64) | `FreeMD-1.0.2-linux-x64.AppImage` | 通用免安装包，下载后 `chmod +x` 直接运行，适用于 Fedora / Arch / 其他发行版 |
 | macOS (Intel) | `FreeMD-1.0.2-mac-x64.zip` | 解压后拖入「应用程序」 |
 | macOS (Apple Silicon) | `FreeMD-1.0.2-mac-arm64.zip` | 解压后拖入「应用程序」 |
 

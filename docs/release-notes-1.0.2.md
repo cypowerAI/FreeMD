@@ -17,6 +17,7 @@
 | Windows | `FreeMD-1.0.2-win-x64.exe` | NSIS 安装程序，可选安装目录、创建桌面快捷方式，关联 `.md` 文件 |
 | Windows | `FreeMD-1.0.2-portable-x64.exe` | 免安装绿色版，双击即用 |
 | Linux (x64) | `FreeMD-1.0.2-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.2-linux-x64.deb` |
+| Linux (x64) | `FreeMD-1.0.2-linux-x64.AppImage` | 通用免安装包，`chmod +x` 后直接运行，适用于 Fedora / Arch / 其他发行版 |
 | macOS (Intel) | `FreeMD-1.0.2-mac-x64.zip` | 解压后把 `FreeMD.app` 拖入「应用程序」 |
 | macOS (Apple Silicon) | `FreeMD-1.0.2-mac-arm64.zip` | 解压后把 `FreeMD.app` 拖入「应用程序」 |
 
@@ -25,6 +26,8 @@
 安装后直接用桌面图标或终端命令 `freemd` 启动。deb 内的 `/opt/FreeMD/chrome-sandbox` 已经是 `root:root` 且权限 4755，Ubuntu 23.10+/24.04、Debian 12 可直接启动。
 
 缺少系统依赖时：`sudo apt-get install -y libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 xdg-utils libatspi2.0-0 libsecret-1-0`。
+
+AppImage 版不需要安装：下载后 `chmod +x FreeMD-1.0.2-linux-x64.AppImage` 直接运行，适合 Fedora / Arch 等非 Debian 系发行版，也可用 [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) 做桌面集成。
 
 ### 功能
 
@@ -51,5 +54,6 @@ SHA256：
 | `FreeMD-1.0.2-win-x64.exe` | `5CBC81FCEAD806990D688D3BB8F478FA762E197342E996425EADBB0192B322A6` |
 | `FreeMD-1.0.2-portable-x64.exe` | `55680A8729E1D8BDFC686261E29A5D956CB05AB52581BF62F835C8C6BF41C102` |
 | `FreeMD-1.0.2-linux-x64.deb` | `D65F8EFE7A7D98BD0A1D2974905A570BAF8115DAD8C729E6B059188E05838FA8` |
+| `FreeMD-1.0.2-linux-x64.AppImage` | `8D3BC3B5F9C1827D10F3763501ADC4CD1E74FD080CF428080F4CA90190FB74C2` |
 | `FreeMD-1.0.2-mac-x64.zip` | `A74A4EA33A5E7240E7B4B44299F9096422DBB30FC5B9E0BD2C5F1238BBC6A4CD` |
 | `FreeMD-1.0.2-mac-arm64.zip` | `432F4A7D8C512F49BC4055066ADD919B4978510C950E2818E16258DDF3281D6D` |
