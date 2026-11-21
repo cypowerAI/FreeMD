@@ -1431,6 +1431,10 @@ html[data-theme="dark"] .markdown-body thead th {
   font-family: inherit;
 }
 
+.markdown-body .mermaid-block svg {
+  cursor: zoom-in;
+}
+
 .markdown-body .mermaid-block.is-error {
   border-color: var(--warn);
   background: color-mix(in srgb, var(--warn) 8%, var(--paper));

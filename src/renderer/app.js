@@ -493,6 +493,19 @@
     return config;
   }
 
+  /**
+   * 类图节点多、天然很宽，按容器宽度等比缩到可读尺寸，细节靠点击放大查看，
+   * 避免出现宽到必须横向拖动、只能看到一角的排版。
+   */
+  function openDiagramLightbox(block) {
+    const svg = block.querySelector('svg');
+    if (!svg) return;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const markup = new XMLSerializer().serializeToString(clone);
+    openLightbox(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`, { diagram: true });
+  }
+
   function markMermaidError(node, source, error) {
     node.classList.add('is-error');
     const block = mermaidBlockOf(node);
@@ -544,6 +557,14 @@
           continue;
         }
         const id = `freemd-mermaid-${mermaidSeq++}`;
+        if (/^@startuml|^@enduml|^\s*skinparam\b|^\s*package\s+"/i.test(code)) {
+          markMermaidError(
+            node,
+            source,
+            new Error('这看起来是 PlantUML 语法（@startuml），FreeMD 渲染的是 Mermaid，请改写成 classDiagram 等 Mermaid 语法')
+          );
+          continue;
+        }
         try {
           const result = await api.render(id, code);
           node.innerHTML = result.svg;
@@ -1019,10 +1040,14 @@
 
   let lightboxScale = 1;
 
-  function openLightbox(src) {
+  function openLightbox(src, options) {
     if (!src) return;
+    const isDiagram = Boolean(options && options.diagram);
     lightboxScale = 1;
     els.lightboxImg.style.transform = 'scale(1)';
+    // 图表是透明底 SVG，按当前主题给一块纸面底色，免得落在深色遮罩上看不清
+    els.lightboxImg.style.background = isDiagram ? cssVar('--paper', '#fffdf9') : '';
+    els.lightboxImg.style.padding = isDiagram ? '18px' : '';
     els.lightboxImg.src = src;
     els.lightbox.hidden = false;
   }
@@ -1030,6 +1055,8 @@
   function closeLightbox() {
     els.lightbox.hidden = true;
     els.lightboxImg.src = '';
+    els.lightboxImg.style.background = '';
+    els.lightboxImg.style.padding = '';
   }
 
   /* ------------------------------------------------------------------ ui */
@@ -1114,6 +1141,11 @@
     });
 
     els.preview.addEventListener('click', (event) => {
+      const diagram = event.target.closest('.mermaid-block');
+      if (diagram && diagram.querySelector('svg')) {
+        openDiagramLightbox(diagram);
+        return;
+      }
       const link = event.target.closest('a');
       if (!link) return;
       const href = link.getAttribute('href') || '';
