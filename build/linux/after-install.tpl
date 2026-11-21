@@ -36,4 +36,12 @@ if hash update-desktop-database 2>/dev/null; then
     update-desktop-database /usr/share/applications || true
 fi
 
+# 刷新图标缓存：Ubuntu / GNOME 的图标主题按 hicolor 尺寸目录索引查找，
+# 不刷新缓存时新装的多尺寸图标可能不会被主题收录，桌面仍显示默认齿轮图标。
+if hash gtk-update-icon-cache 2>/dev/null; then
+    gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
+elif hash update-icon-caches 2>/dev/null; then
+    update-icon-caches /usr/share/icons/hicolor || true
+fi
+
 exit 0

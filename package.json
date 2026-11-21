@@ -79,7 +79,7 @@
       "artifactName": "FreeMD-${version}-portable-${arch}.${ext}"
     },
     "linux": {
-      "icon": "build/icon.png",
+      "icon": "build/icons",
       "category": "Office",
       "maintainer": "cypowerAI <cypower@163.com>",
       "synopsis": "Markdown reader and editor",
