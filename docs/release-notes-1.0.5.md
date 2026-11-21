@@ -44,7 +44,7 @@ AppImage 版不需要安装：下载后 `chmod +x FreeMD-1.0.5-linux-x64.AppImag
 
 - 所有平台的产物均**未做代码签名**。Windows 首次运行可能出现 SmartScreen 提示，选择「更多信息 → 仍要运行」即可。
 - macOS 首次打开若提示「无法验证开发者」，请在「访达」中右键点击 `FreeMD.app` → 打开，或执行 `xattr -cr FreeMD.app` 后再启动。
-- macOS 包由 Linux 环境下的 `scripts/build-mac-zip.sh` 生成（注入官方 Electron 运行时并改写 Info.plist），未使用 Apple 开发者证书签名。
+- macOS 包由 Linux 环境下的 `scripts/build-mac-zip.js` 生成（注入官方 Electron 运行时并改写 Info.plist），未使用 Apple 开发者证书签名。
 - Mermaid 图表内的字体使用系统字体，中文标签在部分 Linux 发行版上需要安装中文字体（如 `fonts-noto-cjk`）才能正常显示。
 - 只渲染 Mermaid 语法；PlantUML 需要 Java 与服务端，不在离线阅读器范围内，` ```plantuml ` 代码块按普通代码展示，写在 ` ```mermaid ` 里时会给出语法提示。
 - 类图连线的直角化是按起止点重排折线，节点极多、层级交错的超大类图可能在个别位置出现连线穿插，可点击放大后阅读。
