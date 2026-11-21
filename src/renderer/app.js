@@ -514,11 +514,84 @@
   }
 
   /**
-   * 类图连线由 dagre 输出为三次贝塞尔曲线，这里按起止点改写成正交折线（直角转角），
-   * 与流程图的直角连线保持一致；端点仍落在节点边框上，箭头朝向由末段方向决定。
+   * 类图的节点矩形（SVG 用户坐标）。节点组可能带 translate 甚至缩放，
+   * 直接拿 getBoundingClientRect 再经 CTM 逆变换换回 SVG 坐标最稳妥。
+   */
+  function classNodeRects(svg) {
+    const rects = [];
+    const inverse = svg.getScreenCTM() ? svg.getScreenCTM().inverse() : null;
+    svg.querySelectorAll('.node').forEach((node) => {
+      if (!inverse) {
+        // 打印用的副本还没挂到文档上，拿不到 CTM，退回 bbox + translate
+        const box = node.getBBox();
+        if (!box.width || !box.height) return;
+        const matrix = node.transform.baseVal.consolidate();
+        rects.push({
+          x: box.x + (matrix ? matrix.matrix.e : 0),
+          y: box.y + (matrix ? matrix.matrix.f : 0),
+          w: box.width,
+          h: box.height
+        });
+        return;
+      }
+      const box = node.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      const a = new DOMPoint(box.left, box.top).matrixTransform(inverse);
+      const b = new DOMPoint(box.right, box.bottom).matrixTransform(inverse);
+      rects.push({
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        w: Math.abs(b.x - a.x),
+        h: Math.abs(b.y - a.y)
+      });
+    });
+    return rects;
+  }
+
+  /**
+   * 把端点吸附到最近类框的边框上，并返回该点是从哪一侧贴上去的
+   * （top/bottom → 竖直进入，left/right → 水平进入）。dagre 给的端点会比
+   * 边框缩进几像素，只按原坐标改折线，箭头就会悬在框外。
+   */
+  function nearestBorderPoint(rects, point) {
+    let best = null;
+    let bestDistance = Infinity;
+    for (const rect of rects) {
+      const cx = Math.min(Math.max(point[0], rect.x), rect.x + rect.w);
+      const cy = Math.min(Math.max(point[1], rect.y), rect.y + rect.h);
+      const distance = Math.hypot(point[0] - cx, point[1] - cy);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = rect;
+      }
+    }
+    if (!best || bestDistance > 48) return { point, side: null };
+    const candidates = [
+      { point: [Math.min(Math.max(point[0], best.x), best.x + best.w), best.y], side: 'y' },
+      { point: [Math.min(Math.max(point[0], best.x), best.x + best.w), best.y + best.h], side: 'y' },
+      { point: [best.x, Math.min(Math.max(point[1], best.y), best.y + best.h)], side: 'x' },
+      { point: [best.x + best.w, Math.min(Math.max(point[1], best.y), best.y + best.h)], side: 'x' }
+    ];
+    let picked = candidates[0];
+    let pickedDistance = Infinity;
+    for (const candidate of candidates) {
+      const distance = Math.hypot(point[0] - candidate.point[0], point[1] - candidate.point[1]);
+      if (distance < pickedDistance) {
+        pickedDistance = distance;
+        picked = candidate;
+      }
+    }
+    return { point: picked.point, side: picked.side };
+  }
+
+  /**
+   * 类图连线由 dagre 输出为三次贝塞尔曲线，这里改写成正交折线（直角转角），
+   * 两端先吸附到类框边框，再按贴边方向选折线走法，保证箭头落在对应的类
+   * （实体）上而不是悬在框外。
    */
   function orthogonalizeClassEdges(svg) {
     if (!svg || svg.getAttribute('aria-roledescription') !== 'classDiagram') return;
+    const rects = classNodeRects(svg);
     svg.querySelectorAll('.edgePaths path').forEach((path) => {
       const d = path.getAttribute('d') || '';
       const pairs = d.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/g);
@@ -528,13 +601,24 @@
       const dx = end[0] - start[0];
       const dy = end[1] - start[1];
       if (Math.hypot(dx, dy) < 16) return;
-      const points = [start];
-      if (Math.abs(dy) >= Math.abs(dx)) {
-        const midY = (start[1] + end[1]) / 2;
-        points.push([start[0], midY], [end[0], midY], end);
+      const fallbackSide = Math.abs(dy) >= Math.abs(dx) ? 'y' : 'x';
+      const snappedStart = nearestBorderPoint(rects, start);
+      const snappedEnd = nearestBorderPoint(rects, end);
+      const startSide = snappedStart.side || fallbackSide;
+      const endSide = snappedEnd.side || fallbackSide;
+      const from = snappedStart.point;
+      const to = snappedEnd.point;
+      const points = [from];
+      if (startSide === 'y' && endSide === 'y') {
+        const midY = (from[1] + to[1]) / 2;
+        points.push([from[0], midY], [to[0], midY], to);
+      } else if (startSide === 'x' && endSide === 'x') {
+        const midX = (from[0] + to[0]) / 2;
+        points.push([midX, from[1]], [midX, to[1]], to);
+      } else if (startSide === 'y') {
+        points.push([from[0], to[1]], to);
       } else {
-        const midX = (start[0] + end[0]) / 2;
-        points.push([midX, start[1]], [midX, end[1]], end);
+        points.push([to[0], from[1]], to);
       }
       const unique = points.filter(
         (point, index) => index === 0 || Math.hypot(point[0] - points[index - 1][0], point[1] - points[index - 1][1]) > 0.5
