@@ -65,7 +65,7 @@ function outline(headings) {
 
 ## 图表绘制
 
-用 `mermaid` 作为代码块的语言标记，流程图、时序图、类图、状态图、ER 图、甘特图都会被渲染成矢量图形，配色跟随当前主题，导出 PDF 时同样保留：
+用 `mermaid` 作为代码块的语言标记，流程图、时序图、类图、状态图、ER 图、甘特图都会被渲染成矢量图形，配色跟随当前主题，导出 PDF 时同样保留。标注为 `plantuml` / `puml` 的 PlantUML 类图也会在本地转写成 Mermaid 后渲染（`package`、`class`、`interface`、`abstract`、`enum`、继承/实现/依赖/组合/聚合、`note` 均支持），不需要安装 Java：
 
 ```mermaid
 flowchart TD
@@ -73,6 +73,22 @@ flowchart TD
     B -->|是| C[渲染为矢量图]
     B -->|否| D[普通渲染]
     C --> E[导出 PDF 保留图表]
+```
+
+```plantuml
+@startuml
+package "示例" {
+  class Service
+  interface Repository
+  class MySQLRepository
+}
+Repository <|.. MySQLRepository
+Service ..> Repository : uses >
+note right of Service
+  本地转写
+  无需 Java
+end note
+@enduml
 ```
 
 ```mermaid

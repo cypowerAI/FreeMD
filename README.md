@@ -10,16 +10,16 @@ FreeMD 是一个基于 Electron 的桌面应用：左栏是章节大纲与文件
 
 ## 下载安装
 
-从 [Releases](https://github.com/cypowerAI/FreeMD/releases/latest) 页面下载对应平台的安装包（当前版本 **1.0.6**，UML 类图连线改为直角，箭头精确落在目标类框上）：
+从 [Releases](https://github.com/cypowerAI/FreeMD/releases/latest) 页面下载对应平台的安装包（当前版本 **1.0.7**，支持 PlantUML 类图离线渲染，箭头精确落在目标类框上）：
 
 | 平台 | 文件 | 类型 |
 | --- | --- | --- |
-| Windows | `FreeMD-1.0.6-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
-| Windows | `FreeMD-1.0.6-portable-x64.exe` | 免安装绿色版，双击即用 |
-| Linux (x64) | `FreeMD-1.0.6-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.6-linux-x64.deb` |
-| Linux (x64) | `FreeMD-1.0.6-linux-x64.AppImage` | 通用免安装包，下载后 `chmod +x` 直接运行，适用于 Fedora / Arch / 其他发行版 |
-| macOS (Intel) | `FreeMD-1.0.6-mac-x64.zip` | 解压后拖入「应用程序」 |
-| macOS (Apple Silicon) | `FreeMD-1.0.6-mac-arm64.zip` | 解压后拖入「应用程序」 |
+| Windows | `FreeMD-1.0.7-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
+| Windows | `FreeMD-1.0.7-portable-x64.exe` | 免安装绿色版，双击即用 |
+| Linux (x64) | `FreeMD-1.0.7-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.7-linux-x64.deb` |
+| Linux (x64) | `FreeMD-1.0.7-linux-x64.AppImage` | 通用免安装包，下载后 `chmod +x` 直接运行，适用于 Fedora / Arch / 其他发行版 |
+| macOS (Intel) | `FreeMD-1.0.7-mac-x64.zip` | 解压后拖入「应用程序」 |
+| macOS (Apple Silicon) | `FreeMD-1.0.7-mac-arm64.zip` | 解压后拖入「应用程序」 |
 
 > macOS 版本未做代码签名。首次打开若提示「无法验证开发者」，请在「访达」中右键点击 FreeMD.app → 打开，或执行 `xattr -cr FreeMD.app` 后再启动。
 >
@@ -55,7 +55,7 @@ sudo chown root:root /opt/FreeMD/chrome-sandbox && sudo chmod 4755 /opt/FreeMD/c
 | --- | --- |
 | **章节结构** | 解析 `#` ~ `######` 标题层级，压缩成 `1` / `1.1` / `1.1.2` 编号，生成大纲树；对没有 Markdown 标题的纯文本笔记，用「第一章」「1. 概述」等行文特征做启发式识别并标注徽标 |
 | **公式** | `$...$` 行内公式与 `$$...$$` 块级公式由 KaTeX 渲染，支持矩阵、积分、多行推导 |
-| **图表** | 以 `mermaid` 作为代码块语言标记时由 Mermaid 渲染为 SVG：流程图、时序图、类图（UML）、状态图、ER 图、甘特图、饼图等；配色随主题变化，语法错误时退回显示源码 |
+| **图表** | 以 `mermaid` 作为代码块语言标记时由 Mermaid 渲染为 SVG：流程图、时序图、类图（UML）、状态图、ER 图、甘特图、饼图等；`plantuml` / `puml` 的 PlantUML 类图在本地转写后同样渲染（无需 Java）；配色随主题变化，语法错误时退回显示源码 |
 | **图像** | 相对路径按文档所在目录解析（`assets/x.png`、`../img/a.jpg` 均可），支持绝对路径、网络图片、`data:` 内联图 |
 | **元信息** | 解析 YAML front matter 的 title / author / date / tags，渲染成文档信息卡 |
 | **任务列表** | `- [ ]` / `- [x]` 渲染为带勾选状态的条目 |
