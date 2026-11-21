@@ -151,8 +151,18 @@
     </div>
 
     <div id="lightbox" class="lightbox" hidden>
-      <img id="lightboxImg" alt="" />
-      <span class="lightbox-tip">点击任意处关闭 · 滚轮缩放</span>
+      <div id="lightboxStage" class="lightbox-stage">
+        <img id="lightboxImg" alt="" draggable="false" />
+      </div>
+      <div class="lightbox-bar" id="lightboxBar">
+        <button type="button" data-action="zoom-out" title="缩小（滚轮 / -）">−</button>
+        <span class="lightbox-zoom" id="lightboxZoom">100%</span>
+        <button type="button" data-action="zoom-in" title="放大（滚轮 / +）">+</button>
+        <button type="button" data-action="reset" title="复位（双击 / 0）">复位</button>
+        <button type="button" data-action="fullscreen" title="全屏（F11 / F）">全屏</button>
+        <button type="button" data-action="save" class="is-hidden" title="保存为 SVG 矢量图">保存 SVG</button>
+        <span class="lightbox-tip">拖拽平移 · 滚轮缩放 · Esc 关闭</span>
+      </div>
     </div>
 
     <div id="toast" class="toast"></div>

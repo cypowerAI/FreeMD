@@ -53,6 +53,7 @@ contextBridge.exposeInMainWorld('freemd', {
   confirmUnsaved: (name) => invoke('dialog:confirm-unsaved', name),
 
   exportPdf: (payload) => invoke('export:pdf', payload),
+  saveSvg: (suggestedName, content) => invoke('file:save-svg', suggestedName, content),
   setTitle: (title) => invoke('window:set-title', title),
   confirmClose: () => invoke('window:close-confirmed'),
 

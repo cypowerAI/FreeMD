@@ -489,6 +489,26 @@ function registerIpc() {
     return res.filePath;
   });
 
+  ipcMain.handle('file:save-svg', async (_e, suggestedName, content) => {
+    try {
+      const name = String(suggestedName || 'diagram').replace(/[\\/:*?"<>|]/g, '-');
+      let target = process.env.FREEMD_SVG_OUT;
+      if (!target) {
+        const res = await dialog.showSaveDialog(mainWindow, {
+          title: '保存图表（SVG 矢量图）',
+          defaultPath: path.join(app.getPath('documents'), `${name}.svg`),
+          filters: [{ name: 'SVG 矢量图', extensions: ['svg'] }]
+        });
+        if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+        target = res.filePath.toLowerCase().endsWith('.svg') ? res.filePath : `${res.filePath}.svg`;
+      }
+      await fsp.writeFile(target, String(content || ''), 'utf8');
+      return { ok: true, path: target };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
+
   ipcMain.handle('folder:open-dialog', async () => {
     const res = await dialog.showOpenDialog(mainWindow, {
       title: '打开文件夹',

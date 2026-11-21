@@ -41,6 +41,9 @@
     findCount: $('findCount'),
     lightbox: $('lightbox'),
     lightboxImg: $('lightboxImg'),
+    lightboxStage: $('lightboxStage'),
+    lightboxZoom: $('lightboxZoom'),
+    lightboxBar: $('lightboxBar'),
     toast: $('toast'),
     hljsTheme: $('hljsTheme')
   };
@@ -503,7 +506,41 @@
     const clone = svg.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     const markup = new XMLSerializer().serializeToString(clone);
-    openLightbox(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`, { diagram: true });
+    const blocks = Array.from(document.querySelectorAll('.mermaid-block'));
+    const index = blocks.indexOf(block) + 1;
+    const docName = state.filePath ? baseName(state.filePath).replace(/\.(md|markdown|txt)$/i, '') : 'diagram';
+    const name = `${docName || 'diagram'}-${index || 1}`;
+    openLightbox(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`, { diagram: true, svg: markup, name });
+  }
+
+  /**
+   * 类图连线由 dagre 输出为三次贝塞尔曲线，这里按起止点改写成正交折线（直角转角），
+   * 与流程图的直角连线保持一致；端点仍落在节点边框上，箭头朝向由末段方向决定。
+   */
+  function orthogonalizeClassEdges(svg) {
+    if (!svg || svg.getAttribute('aria-roledescription') !== 'classDiagram') return;
+    svg.querySelectorAll('.edgePaths path').forEach((path) => {
+      const d = path.getAttribute('d') || '';
+      const pairs = d.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/g);
+      if (!pairs || pairs.length < 2) return;
+      const start = pairs[0].split(',').map(Number);
+      const end = pairs[pairs.length - 1].split(',').map(Number);
+      const dx = end[0] - start[0];
+      const dy = end[1] - start[1];
+      if (Math.hypot(dx, dy) < 16) return;
+      const points = [start];
+      if (Math.abs(dy) >= Math.abs(dx)) {
+        const midY = (start[1] + end[1]) / 2;
+        points.push([start[0], midY], [end[0], midY], end);
+      } else {
+        const midX = (start[0] + end[0]) / 2;
+        points.push([midX, start[1]], [midX, end[1]], end);
+      }
+      const unique = points.filter(
+        (point, index) => index === 0 || Math.hypot(point[0] - points[index - 1][0], point[1] - points[index - 1][1]) > 0.5
+      );
+      path.setAttribute('d', unique.map((point, index) => `${index === 0 ? 'M' : 'L'}${point[0]},${point[1]}`).join(''));
+    });
   }
 
   function markMermaidError(node, source, error) {
@@ -568,12 +605,13 @@
         try {
           const result = await api.render(id, code);
           node.innerHTML = result.svg;
+          orthogonalizeClassEdges(node.querySelector('svg'));
           node.dataset.rendered = '1';
           node.classList.remove('is-error');
           const block = mermaidBlockOf(node);
           if (block) block.classList.remove('is-error');
           if (mermaidCache.size > 120) mermaidCache.clear();
-          mermaidCache.set(cacheKey, result.svg);
+          mermaidCache.set(cacheKey, node.innerHTML);
         } catch (error) {
           markMermaidError(node, source, error);
         }
@@ -820,6 +858,7 @@
         try {
           const result = await api.render(`freemd-print-${Date.now()}-${index}`, source);
           dstNodes[index].innerHTML = result.svg;
+          orthogonalizeClassEdges(dstNodes[index].querySelector('svg'));
           const block = mermaidBlockOf(dstNodes[index]);
           if (block) block.classList.remove('is-error');
         } catch (error) {
@@ -1038,25 +1077,77 @@
 
   /* ------------------------------------------------------------- lightbox */
 
-  let lightboxScale = 1;
+  const viewer = { scale: 1, x: 0, y: 0, diagram: false, svg: '', name: 'diagram', dragging: false, moved: false };
+
+  function applyLightboxTransform(animate) {
+    els.lightboxImg.style.transition = animate ? '' : 'none';
+    els.lightboxImg.style.transform = `translate3d(${viewer.x}px, ${viewer.y}px, 0) scale(${viewer.scale})`;
+    if (els.lightboxZoom) els.lightboxZoom.textContent = `${Math.round(viewer.scale * 100)}%`;
+  }
+
+  function resetLightbox() {
+    viewer.scale = 1;
+    viewer.x = 0;
+    viewer.y = 0;
+    applyLightboxTransform(true);
+  }
+
+  /** 以光标为锚点缩放：光标下的那一点在缩放前后保持不动。 */
+  function zoomLightbox(factor, clientX, clientY) {
+    const next = Math.min(6, Math.max(0.4, viewer.scale * factor));
+    if (next === viewer.scale) return;
+    const rect = els.lightboxStage.getBoundingClientRect();
+    const cx = (clientX == null ? rect.left + rect.width / 2 : clientX) - (rect.left + rect.width / 2);
+    const cy = (clientY == null ? rect.top + rect.height / 2 : clientY) - (rect.top + rect.height / 2);
+    const ratio = next / viewer.scale;
+    viewer.x = cx - (cx - viewer.x) * ratio;
+    viewer.y = cy - (cy - viewer.y) * ratio;
+    viewer.scale = next;
+    applyLightboxTransform(false);
+  }
 
   function openLightbox(src, options) {
     if (!src) return;
-    const isDiagram = Boolean(options && options.diagram);
-    lightboxScale = 1;
-    els.lightboxImg.style.transform = 'scale(1)';
+    viewer.diagram = Boolean(options && options.diagram);
+    viewer.svg = (options && options.svg) || '';
+    viewer.name = (options && options.name) || 'diagram';
+    viewer.scale = 1;
+    viewer.x = 0;
+    viewer.y = 0;
     // 图表是透明底 SVG，按当前主题给一块纸面底色，免得落在深色遮罩上看不清
-    els.lightboxImg.style.background = isDiagram ? cssVar('--paper', '#fffdf9') : '';
-    els.lightboxImg.style.padding = isDiagram ? '18px' : '';
+    els.lightboxImg.style.background = viewer.diagram ? cssVar('--paper', '#fffdf9') : '';
+    els.lightboxImg.style.padding = viewer.diagram ? '18px' : '';
+    const saveButton = els.lightboxBar && els.lightboxBar.querySelector('[data-action="save"]');
+    if (saveButton) saveButton.classList.toggle('is-hidden', !viewer.diagram);
     els.lightboxImg.src = src;
     els.lightbox.hidden = false;
+    applyLightboxTransform(true);
   }
 
   function closeLightbox() {
+    if (document.fullscreenElement === els.lightbox && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
     els.lightbox.hidden = true;
     els.lightboxImg.src = '';
     els.lightboxImg.style.background = '';
     els.lightboxImg.style.padding = '';
+    els.lightboxImg.style.transform = '';
+    resetLightbox();
+  }
+
+  function toggleLightboxFullscreen() {
+    if (!els.lightbox.hidden && document.fullscreenEnabled) {
+      if (document.fullscreenElement === els.lightbox) document.exitFullscreen().catch(() => {});
+      else els.lightbox.requestFullscreen().catch(() => toast('当前窗口不允许全屏'));
+    }
+  }
+
+  async function saveDiagramSvg() {
+    if (!viewer.svg) return;
+    const saved = await api.saveSvg(viewer.name, viewer.svg);
+    if (saved && saved.ok) toast(`已保存：${saved.path}`);
+    else if (saved && saved.error) toast(`保存失败：${saved.error}`);
   }
 
   /* ------------------------------------------------------------------ ui */
@@ -1172,18 +1263,72 @@
       openDocument(resolved);
     });
 
-    els.lightbox.addEventListener('click', closeLightbox);
-    els.lightbox.addEventListener('wheel', (event) => {
+    // 灯箱：图内拖拽平移、滚轮以光标为锚点缩放、双击复位
+    els.lightboxStage.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      viewer.dragging = true;
+      viewer.moved = false;
+      viewer.startX = event.clientX;
+      viewer.startY = event.clientY;
+      viewer.originX = viewer.x;
+      viewer.originY = viewer.y;
+      els.lightboxStage.classList.add('is-dragging');
+      els.lightboxStage.setPointerCapture(event.pointerId);
+    });
+    els.lightboxStage.addEventListener('pointermove', (event) => {
+      if (!viewer.dragging) return;
+      const dx = event.clientX - viewer.startX;
+      const dy = event.clientY - viewer.startY;
+      if (Math.abs(dx) + Math.abs(dy) > 3) viewer.moved = true;
+      viewer.x = viewer.originX + dx;
+      viewer.y = viewer.originY + dy;
+      applyLightboxTransform(false);
+    });
+    const endDrag = (event) => {
+      if (!viewer.dragging) return;
+      viewer.dragging = false;
+      els.lightboxStage.classList.remove('is-dragging');
+      if (els.lightboxStage.hasPointerCapture(event.pointerId)) {
+        els.lightboxStage.releasePointerCapture(event.pointerId);
+      }
+    };
+    els.lightboxStage.addEventListener('pointerup', endDrag);
+    els.lightboxStage.addEventListener('pointercancel', endDrag);
+    els.lightboxStage.addEventListener('click', (event) => {
+      if (viewer.moved) return;
+      if (event.target === els.lightboxStage) closeLightbox();
+    });
+    els.lightboxStage.addEventListener('dblclick', (event) => {
       event.preventDefault();
-      lightboxScale = Math.min(4, Math.max(0.5, lightboxScale - Math.sign(event.deltaY) * 0.12));
-      els.lightboxImg.style.transform = `scale(${lightboxScale})`;
+      resetLightbox();
+    });
+    els.lightboxStage.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      zoomLightbox(event.deltaY < 0 ? 1.12 : 1 / 1.12, event.clientX, event.clientY);
     }, { passive: false });
+    els.lightboxBar.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      event.stopPropagation();
+      const action = button.dataset.action;
+      if (action === 'zoom-in') zoomLightbox(1.25);
+      else if (action === 'zoom-out') zoomLightbox(1 / 1.25);
+      else if (action === 'reset') resetLightbox();
+      else if (action === 'fullscreen') toggleLightboxFullscreen();
+      else if (action === 'save') void saveDiagramSvg();
+    });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         if (!els.lightbox.hidden) closeLightbox();
         else if (state.find.open) closeFind();
+        return;
       }
+      if (els.lightbox.hidden) return;
+      if (event.key === '+' || event.key === '=') zoomLightbox(1.25);
+      else if (event.key === '-') zoomLightbox(1 / 1.25);
+      else if (event.key === '0') resetLightbox();
+      else if (event.key === 'f' || event.key === 'F') toggleLightboxFullscreen();
     });
 
     // Divider drag (editor / preview split)
