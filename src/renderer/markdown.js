@@ -322,6 +322,29 @@
   mathPlugin(md);
   headingRule(md);
 
+  /* ---------------------------------------------------------- mermaid */
+
+  // 围栏代码块若标注为 mermaid，就交给渲染层生成图表；生成失败时回退成源码块。
+  // 原始源码放在 .mermaid 节点的文本里，渲染前由 app.js 存进 dataset，供主题切换重绘。
+  const defaultFence =
+    md.renderer.rules.fence ||
+    ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options));
+
+  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const info = (token.info || '').trim();
+    const lang = info.split(/\s+/)[0].toLowerCase();
+    if (lang === 'mermaid') {
+      if (env) env.mermaidCount = (env.mermaidCount || 0) + 1;
+      return (
+        '<div class="mermaid-block" data-freemd="mermaid">' +
+        `<div class="mermaid">${escapeHtml(token.content)}</div>` +
+        '</div>\n'
+      );
+    }
+    return defaultFence(tokens, idx, options, env, self);
+  };
+
   // Open external links in a new context; the main process intercepts them.
   const defaultLinkOpen =
     md.renderer.rules.link_open ||
@@ -373,7 +396,7 @@
     const fm = parseFrontMatter(source || '');
     const detected = detectSections(fm.body);
 
-    const env = { headings: [], mathCount: 0, autoLines: detected.autoLines, images: 0 };
+    const env = { headings: [], mathCount: 0, mermaidCount: 0, autoLines: detected.autoLines, images: 0 };
     let html = md.render(detected.source, env);
     html = resolveImageSources(html, opts.docDir || '');
 
@@ -386,6 +409,7 @@
       frontMatter: fm.data,
       stats: {
         math: env.mathCount,
+        mermaid: env.mermaidCount,
         autoSections: detected.count,
         headings: env.headings.length
       }

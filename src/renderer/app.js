@@ -33,6 +33,7 @@
     statSections: $('statSections'),
     statImages: $('statImages'),
     statMath: $('statMath'),
+    statDiagrams: $('statDiagrams'),
     statWords: $('statWords'),
     statCursor: $('statCursor'),
     findBox: $('findBox'),
@@ -64,7 +65,7 @@
     outline: [],
     headingEls: [],
     activeIndex: -1,
-    stats: { math: 0 },
+    stats: { math: 0, mermaid: 0 },
     folderRoot: null,
     folderTree: null,
     recent: [],
@@ -238,9 +239,11 @@
     els.preview.innerHTML = result.html;
     state.outline = buildOutline(result.headings);
     state.stats.math = result.stats.math;
+    state.stats.mermaid = result.stats.mermaid || 0;
     state.headingEls = Array.from(els.preview.querySelectorAll('.sec-heading'));
 
     decoratePreview();
+    void renderMermaidDiagrams();
     renderOutline();
 
     if (state.find.open) runFind(state.find.query, true, true);
@@ -384,11 +387,203 @@
     });
   }
 
+  /* -------------------------------------------------------- mermaid */
+
+  let mermaidSeq = 0;
+  let mermaidRunning = false;
+  let mermaidPending = false;
+  // key = 主题 + 源码，编辑时未改动的图直接复用上一轮 SVG，避免每敲一次键就重排一遍。
+  const mermaidCache = new Map();
+
+  function mermaidThemeName() {
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function cssVar(name, fallback) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  function parseHex(color) {
+    const value = color.replace('#', '');
+    if (value.length !== 6) return null;
+    return [0, 2, 4].map((index) => parseInt(value.slice(index, index + 2), 16));
+  }
+
+  /** 把 accent 按给定比例混进底色，得到同一色系的浅色面。 */
+  function tint(color, base, ratio) {
+    const a = parseHex(color);
+    const b = parseHex(base);
+    if (!a || !b) return base;
+    const mixed = a.map((channel, index) => Math.round(channel * ratio + b[index] * (1 - ratio)));
+    return `#${mixed.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  function mermaidConfig(themeOverride) {
+    const dark = (themeOverride || document.documentElement.dataset.theme) === 'dark';
+    const accent = cssVar('--accent', dark ? '#45cdb2' : '#0d7a6a');
+    const accentInk = cssVar('--accent-ink', accent);
+    const ink = cssVar('--ink', dark ? '#e5e8ec' : '#1a1b1e');
+    const inkSoft = cssVar('--ink-soft', ink);
+    const paper = cssVar('--paper', dark ? '#14171c' : '#fffdf9');
+    const surface = cssVar('--surface', paper);
+    const line = cssVar('--line', '#ddddd5');
+
+    return {
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: 'base',
+      fontFamily: getComputedStyle(document.body).fontFamily || 'sans-serif',
+      themeVariables: {
+        darkMode: dark,
+        background: paper,
+        primaryColor: tint(accent, paper, dark ? 0.16 : 0.1),
+        primaryBorderColor: accent,
+        primaryTextColor: ink,
+        secondaryColor: tint(accent, paper, dark ? 0.1 : 0.06),
+        secondaryBorderColor: accent,
+        secondaryTextColor: ink,
+        tertiaryColor: surface,
+        tertiaryBorderColor: line,
+        tertiaryTextColor: inkSoft,
+        mainBkg: tint(accent, paper, dark ? 0.16 : 0.1),
+        nodeBorder: accent,
+        nodeTextColor: ink,
+        clusterBkg: tint(accent, paper, dark ? 0.08 : 0.04),
+        clusterBorder: line,
+        lineColor: dark ? accent : accentInk,
+        textColor: ink,
+        edgeLabelBackground: paper,
+        titleColor: ink,
+        noteBkgColor: tint(accent, paper, dark ? 0.12 : 0.08),
+        noteBorderColor: accent,
+        noteTextColor: ink,
+        actorBkg: tint(accent, paper, dark ? 0.16 : 0.1),
+        actorBorder: accent,
+        actorTextColor: ink,
+        actorLineColor: accentInk,
+        signalColor: accentInk,
+        signalTextColor: ink,
+        activationBkgColor: tint(accent, paper, dark ? 0.2 : 0.14),
+        activationBorderColor: accent,
+        labelBoxBkgColor: tint(accent, paper, dark ? 0.16 : 0.1),
+        labelBoxBorderColor: accent,
+        labelTextColor: ink,
+        loopTextColor: ink,
+        fontSize: '14px'
+      },
+      flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: true },
+      sequence: { useMaxWidth: true },
+      gantt: { useMaxWidth: true }
+    };
+  }
+
+  function mermaidBlockOf(node) {
+    return node.closest ? node.closest('.mermaid-block') : null;
+  }
+
+  /** 取亮色主题下的配置：颜色 token 挂在 :root 上，只能临时切一下再读回。 */
+  function lightMermaidConfig() {
+    const root = document.documentElement;
+    const previous = root.dataset.theme;
+    const flip = previous === 'dark';
+    if (flip) root.dataset.theme = 'light';
+    const config = mermaidConfig('light');
+    if (flip) root.dataset.theme = previous;
+    return config;
+  }
+
+  function markMermaidError(node, source, error) {
+    node.classList.add('is-error');
+    const block = mermaidBlockOf(node);
+    if (block) block.classList.add('is-error');
+    node.dataset.rendered = 'error';
+    const message = String((error && (error.str || error.message)) || '语法解析失败').split('\n')[0];
+    node.innerHTML =
+      `<pre class="mermaid-source"><code>${MD.escapeHtml(source)}</code></pre>` +
+      `<p class="mermaid-error">图表渲染失败：${MD.escapeHtml(message)}</p>`;
+  }
+
+  /**
+   * 把 .mermaid 节点里的源码交给 Mermaid 渲染成 SVG。
+   * 源码保存在 dataset.src 上，切换主题时用它重新绘制。
+   */
+  async function renderMermaidDiagrams() {
+    const nodes = Array.from(els.preview.querySelectorAll('.mermaid'));
+    if (!nodes.length) return;
+
+    const api = window.mermaid;
+    if (!api) {
+      nodes.forEach((node) => markMermaidError(node, node.textContent, new Error('Mermaid 资源未加载')));
+      return;
+    }
+
+    if (mermaidRunning) {
+      mermaidPending = true;
+      return;
+    }
+    mermaidRunning = true;
+
+    try {
+      const themeKey = mermaidThemeName();
+      api.initialize(mermaidConfig());
+      for (const node of nodes) {
+        if (node.dataset.rendered === '1') continue;
+        const source = node.dataset.src != null ? node.dataset.src : node.textContent;
+        node.dataset.src = source;
+        const code = source.trim();
+        if (!code) continue;
+        const cacheKey = `${themeKey}\u0000${code}`;
+        const cached = mermaidCache.get(cacheKey);
+        if (cached) {
+          node.innerHTML = cached;
+          node.dataset.rendered = '1';
+          node.classList.remove('is-error');
+          const block = mermaidBlockOf(node);
+          if (block) block.classList.remove('is-error');
+          continue;
+        }
+        const id = `freemd-mermaid-${mermaidSeq++}`;
+        try {
+          const result = await api.render(id, code);
+          node.innerHTML = result.svg;
+          node.dataset.rendered = '1';
+          node.classList.remove('is-error');
+          const block = mermaidBlockOf(node);
+          if (block) block.classList.remove('is-error');
+          if (mermaidCache.size > 120) mermaidCache.clear();
+          mermaidCache.set(cacheKey, result.svg);
+        } catch (error) {
+          markMermaidError(node, source, error);
+        }
+      }
+    } finally {
+      mermaidRunning = false;
+      if (mermaidPending) {
+        mermaidPending = false;
+        void renderMermaidDiagrams();
+      }
+    }
+  }
+
+  function rerenderMermaid() {
+    const nodes = els.preview.querySelectorAll('.mermaid');
+    if (!nodes.length) return;
+    nodes.forEach((node) => {
+      if (!node.classList.contains('is-error') && node.dataset.src == null) return;
+      if (node.dataset.src != null) node.textContent = node.dataset.src;
+      delete node.dataset.rendered;
+    });
+    void renderMermaidDiagrams();
+  }
+
   function updateStats() {
     const wordCount = countWords(cm ? cm.getValue() : '');
     els.statSections.innerHTML = `<em>${state.outline.length}</em> 章节`;
     els.statImages.innerHTML = `<em>${els.preview.querySelectorAll('img').length}</em> 图片`;
     els.statMath.innerHTML = `<em>${state.stats.math || 0}</em> 公式`;
+    els.statDiagrams.hidden = !state.stats.mermaid;
+    els.statDiagrams.innerHTML = `<em>${state.stats.mermaid || 0}</em> 图表`;
     els.statWords.innerHTML = `<em>${wordCount}</em> 字`;
   }
 
@@ -581,10 +776,47 @@
     return true;
   }
 
+  /**
+   * 打印底永远是白纸，暗色主题下直接导出会得到浅字深底的图，
+   * 所以导出前在副本里按亮色主题重画一遍 Mermaid。
+   */
+  async function previewHtmlForPrint() {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const api = window.mermaid;
+    if (!dark || !api) return els.preview.innerHTML;
+
+    const srcNodes = Array.from(els.preview.querySelectorAll('.mermaid'));
+    if (!srcNodes.length) return els.preview.innerHTML;
+
+    const clone = els.preview.cloneNode(true);
+    const dstNodes = Array.from(clone.querySelectorAll('.mermaid'));
+    api.initialize(lightMermaidConfig());
+    try {
+      for (let index = 0; index < dstNodes.length; index += 1) {
+        const node = srcNodes[index];
+        const source = (node.dataset.src != null ? node.dataset.src : node.textContent).trim();
+        if (!source) continue;
+        try {
+          const result = await api.render(`freemd-print-${Date.now()}-${index}`, source);
+          dstNodes[index].innerHTML = result.svg;
+          const block = mermaidBlockOf(dstNodes[index]);
+          if (block) block.classList.remove('is-error');
+        } catch (error) {
+          /* 渲染失败时保留克隆里的源码回退样式 */
+          console.warn('mermaid print render failed', String((error && error.message) || error));
+        }
+      }
+    } finally {
+      api.initialize(mermaidConfig());
+    }
+    return clone.innerHTML;
+  }
+
   async function exportPdf() {
     const title = state.filePath ? stemName(state.filePath) : firstHeading() || 'FreeMD 文档';
     toast('正在生成 PDF…', 1400);
-    const res = await api.exportPdf({ html: els.preview.innerHTML, title });
+    const html = await previewHtmlForPrint();
+    const res = await api.exportPdf({ html, title });
     if (res && res.ok) toast(`PDF 已导出：${baseName(res.path)}`);
     else if (res && res.error) toast(`导出失败：${res.error}`);
   }
@@ -807,6 +1039,7 @@
     els.hljsTheme.href = theme === 'dark' ? 'vendor/hljs/github-dark.min.css' : 'vendor/hljs/github.min.css';
     persist({ theme });
     if (cm) cm.refresh();
+    rerenderMermaid();
   }
 
   function setView(view) {

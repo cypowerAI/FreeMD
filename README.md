@@ -1,6 +1,6 @@
 # FreeMD
 
-> 专注阅读体验的 Markdown 阅读器与编辑器。自动识别文档中的**图像**、**公式**与**章节结构**，并据此生成可点击、可联动的目录导航。
+> 专注阅读体验的 Markdown 阅读器与编辑器。自动识别文档中的**图像**、**公式**、**图表**与**章节结构**，并据此生成可点击、可联动的目录导航。
 
 FreeMD 是一个基于 Electron 的桌面应用：左栏是章节大纲与文件浏览，中间是编辑区，右侧是排版后的阅读视图。它把「读」和「写」放在同一个窗口里，滚动位置双向同步。
 
@@ -10,16 +10,16 @@ FreeMD 是一个基于 Electron 的桌面应用：左栏是章节大纲与文件
 
 ## 下载安装
 
-从 [Releases](https://github.com/cypowerAI/FreeMD/releases/latest) 页面下载对应平台的安装包（当前版本 **1.0.2**，阅读视图排版优化：正文占阅读区 75%、表格与代码超宽时区内横滑、表格表头与单双行分色）：
+从 [Releases](https://github.com/cypowerAI/FreeMD/releases/latest) 页面下载对应平台的安装包（当前版本 **1.0.3**，新增 Mermaid 图表渲染：流程图、时序图、类图、状态图等直接在阅读视图与导出的 PDF 中呈现）：
 
 | 平台 | 文件 | 类型 |
 | --- | --- | --- |
-| Windows | `FreeMD-1.0.2-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
-| Windows | `FreeMD-1.0.2-portable-x64.exe` | 免安装绿色版，双击即用 |
-| Linux (x64) | `FreeMD-1.0.2-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.2-linux-x64.deb` |
-| Linux (x64) | `FreeMD-1.0.2-linux-x64.AppImage` | 通用免安装包，下载后 `chmod +x` 直接运行，适用于 Fedora / Arch / 其他发行版 |
-| macOS (Intel) | `FreeMD-1.0.2-mac-x64.zip` | 解压后拖入「应用程序」 |
-| macOS (Apple Silicon) | `FreeMD-1.0.2-mac-arm64.zip` | 解压后拖入「应用程序」 |
+| Windows | `FreeMD-1.0.3-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
+| Windows | `FreeMD-1.0.3-portable-x64.exe` | 免安装绿色版，双击即用 |
+| Linux (x64) | `FreeMD-1.0.3-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.3-linux-x64.deb` |
+| Linux (x64) | `FreeMD-1.0.3-linux-x64.AppImage` | 通用免安装包，下载后 `chmod +x` 直接运行，适用于 Fedora / Arch / 其他发行版 |
+| macOS (Intel) | `FreeMD-1.0.3-mac-x64.zip` | 解压后拖入「应用程序」 |
+| macOS (Apple Silicon) | `FreeMD-1.0.3-mac-arm64.zip` | 解压后拖入「应用程序」 |
 
 > macOS 版本未做代码签名。首次打开若提示「无法验证开发者」，请在「访达」中右键点击 FreeMD.app → 打开，或执行 `xattr -cr FreeMD.app` 后再启动。
 >
@@ -55,6 +55,7 @@ sudo chown root:root /opt/FreeMD/chrome-sandbox && sudo chmod 4755 /opt/FreeMD/c
 | --- | --- |
 | **章节结构** | 解析 `#` ~ `######` 标题层级，压缩成 `1` / `1.1` / `1.1.2` 编号，生成大纲树；对没有 Markdown 标题的纯文本笔记，用「第一章」「1. 概述」等行文特征做启发式识别并标注徽标 |
 | **公式** | `$...$` 行内公式与 `$$...$$` 块级公式由 KaTeX 渲染，支持矩阵、积分、多行推导 |
+| **图表** | 以 `mermaid` 作为代码块语言标记时由 Mermaid 渲染为 SVG：流程图、时序图、类图（UML）、状态图、ER 图、甘特图、饼图等；配色随主题变化，语法错误时退回显示源码 |
 | **图像** | 相对路径按文档所在目录解析（`assets/x.png`、`../img/a.jpg` 均可），支持绝对路径、网络图片、`data:` 内联图 |
 | **元信息** | 解析 YAML front matter 的 title / author / date / tags，渲染成文档信息卡 |
 | **任务列表** | `- [ ]` / `- [x]` 渲染为带勾选状态的条目 |
@@ -74,7 +75,7 @@ sudo chown root:root /opt/FreeMD/chrome-sandbox && sudo chmod 4755 /opt/FreeMD/c
 - 拖拽或粘贴图片自动存入文档同级 `assets/` 目录并插入引用
 - 打开文件夹后在左侧树中浏览、切换文档
 - 保存 / 另存为、未保存修改提醒、最近打开记录
-- 一键导出 PDF（A4 排版，公式与代码块保留）
+- 一键导出 PDF（A4 排版，公式、图表与代码块保留）
 - 关联 `.md` / `.markdown` 文件，支持「打开方式」直接打开
 
 ---
@@ -108,7 +109,7 @@ npm start        # 启动应用
 npm run dev      # 启动应用并打开开发者工具
 ```
 
-`src/renderer/vendor/` 存放 markdown-it、KaTeX、highlight.js、CodeMirror、DOMPurify 的运行时文件，由 `scripts/prepare-vendor.js` 从 `node_modules` 复制而来，因此不纳入版本库，应用完全离线运行，不依赖任何 CDN。
+`src/renderer/vendor/` 存放 markdown-it、KaTeX、highlight.js、CodeMirror、DOMPurify、Mermaid 的运行时文件，由 `scripts/prepare-vendor.js` 从 `node_modules` 复制而来，因此不纳入版本库，应用完全离线运行，不依赖任何 CDN。
 
 ## 打包
 
@@ -144,8 +145,8 @@ FreeMD/
 │   └── renderer/
 │       ├── index.html      # 界面骨架
 │       ├── styles.css      # 双主题样式
-│       ├── app.js          # 编辑器、大纲、滚动同步、文件操作
-│       ├── markdown.js     # markdown-it + KaTeX + 章节/图像识别管线
+│       ├── app.js          # 编辑器、大纲、滚动同步、文件操作、Mermaid 渲染
+│       ├── markdown.js     # markdown-it + KaTeX + 章节/图像/图表识别管线
 │       ├── print.css       # PDF 导出排版
 │       ├── welcome.md      # 内置示例文档
 │       └── assets/         # 示例文档配图

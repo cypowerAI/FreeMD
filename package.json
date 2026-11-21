@@ -1,6 +1,6 @@
 {
   "name": "freemd",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "FreeMD — a focused Markdown reader and editor with automatic image, formula and section recognition.",
   "main": "src/main.js",
   "author": {
@@ -32,7 +32,8 @@
     "electron": "^33.0.0",
     "electron-builder": "^25.1.8",
     "katex": "^0.16.11",
-    "markdown-it": "^14.1.0"
+    "markdown-it": "^14.1.0",
+    "mermaid": "^10.9.8"
   },
   "build": {
     "appId": "ai.cypowerai.freemd",
@@ -51,7 +52,12 @@
     ],
     "fileAssociations": [
       {
-        "ext": ["md", "markdown", "mdown", "mkd"],
+        "ext": [
+          "md",
+          "markdown",
+          "mdown",
+          "mkd"
+        ],
         "name": "Markdown Document",
         "description": "Markdown document",
         "role": "Editor"
@@ -60,8 +66,18 @@
     "win": {
       "icon": "build/icon.png",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "artifactName": "FreeMD-${version}-win-${arch}.${ext}"
     },
@@ -85,7 +101,12 @@
       "synopsis": "Markdown reader and editor",
       "description": "FreeMD is a Markdown reader and editor with automatic detection of images, formulas and document sections, plus a section-based outline for navigation.",
       "target": [
-        { "target": "deb", "arch": ["x64"] }
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "artifactName": "FreeMD-${version}-linux-x64.${ext}"
     },
@@ -95,7 +116,9 @@
     "mac": {
       "icon": "build/icon.png",
       "category": "public.app-category.productivity",
-      "target": ["zip"],
+      "target": [
+        "zip"
+      ],
       "artifactName": "FreeMD-${version}-mac-${arch}.${ext}"
     }
   }

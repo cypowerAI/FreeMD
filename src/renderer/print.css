@@ -96,6 +96,21 @@ body {
   margin: 0;
 }
 
+.markdown-body .mermaid-block {
+  overflow: visible;
+  border: 0.5pt solid #d8d5cd;
+  border-radius: 4pt;
+  background: #ffffff;
+  padding: 6pt;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.markdown-body .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
 .markdown-body table {
   width: 100%;
   border-collapse: collapse;

@@ -1392,6 +1392,65 @@ html[data-theme="dark"] .markdown-body thead th {
   background: transparent;
 }
 
+/* ------------------------------------------------------------- mermaid */
+
+.markdown-body .mermaid-block {
+  margin: 1.7em 0;
+  padding: 14px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown-body .mermaid-block::-webkit-scrollbar {
+  height: 9px;
+}
+
+.markdown-body .mermaid-block::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: 999px;
+}
+
+.markdown-body .mermaid {
+  min-height: 24px;
+  color: var(--ink);
+  text-align: center;
+}
+
+.markdown-body .mermaid svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+}
+
+.markdown-body .mermaid svg text {
+  font-family: inherit;
+}
+
+.markdown-body .mermaid-block.is-error {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 8%, var(--paper));
+}
+
+.markdown-body .mermaid-source {
+  margin: 0;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+.markdown-body .mermaid-error {
+  margin: 4px 0 0;
+  color: var(--warn);
+  font-size: 0.86em;
+  text-align: left;
+}
+
 .markdown-body .doc-meta + h1 {
   margin-top: 0;
 }

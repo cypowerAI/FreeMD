@@ -25,6 +25,8 @@ const COPY = [
   ['@highlightjs/cdn-assets/highlight.min.js', 'hljs/highlight.min.js'],
   ['@highlightjs/cdn-assets/styles/github.min.css', 'hljs/github.min.css'],
   ['@highlightjs/cdn-assets/styles/github-dark.min.css', 'hljs/github-dark.min.css'],
+  // Mermaid (diagrams: flowchart / sequence / class / state / ER / gantt ...)
+  ['mermaid/dist/mermaid.min.js', 'mermaid/mermaid.min.js'],
   // CodeMirror 5
   ['codemirror/lib/codemirror.js', 'codemirror/codemirror.js'],
   ['codemirror/lib/codemirror.css', 'codemirror/codemirror.css'],
