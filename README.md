@@ -10,15 +10,15 @@ FreeMD 是一个基于 Electron 的桌面应用：左栏是章节大纲与文件
 
 ## 下载安装
 
-从 [Releases](https://github.com/cypowerAI/FreeMD/releases/latest) 页面下载对应平台的安装包（当前版本 **1.0.1**，更新了应用图标并修复 Linux 安装包的 sandbox 权限问题）：
+从 [Releases](https://github.com/cypowerAI/FreeMD/releases/latest) 页面下载对应平台的安装包（当前版本 **1.0.2**，阅读视图排版优化：正文占阅读区 75%、表格与代码超宽时区内横滑、表格表头与单双行分色）：
 
 | 平台 | 文件 | 类型 |
 | --- | --- | --- |
-| Windows | `FreeMD-1.0.1-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
-| Windows | `FreeMD-1.0.1-portable-x64.exe` | 免安装绿色版，双击即用 |
-| Linux (x64) | `FreeMD-1.0.1-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.1-linux-x64.deb` |
-| macOS (Intel) | `FreeMD-1.0.1-mac-x64.zip` | 解压后拖入「应用程序」 |
-| macOS (Apple Silicon) | `FreeMD-1.0.1-mac-arm64.zip` | 解压后拖入「应用程序」 |
+| Windows | `FreeMD-1.0.2-win-x64.exe` | NSIS 安装程序（可选安装目录、创建桌面快捷方式） |
+| Windows | `FreeMD-1.0.2-portable-x64.exe` | 免安装绿色版，双击即用 |
+| Linux (x64) | `FreeMD-1.0.2-linux-x64.deb` | Debian / Ubuntu 安装包，`sudo apt install ./FreeMD-1.0.2-linux-x64.deb` |
+| macOS (Intel) | `FreeMD-1.0.2-mac-x64.zip` | 解压后拖入「应用程序」 |
+| macOS (Apple Silicon) | `FreeMD-1.0.2-mac-arm64.zip` | 解压后拖入「应用程序」 |
 
 > macOS 版本未做代码签名。首次打开若提示「无法验证开发者」，请在「访达」中右键点击 FreeMD.app → 打开，或执行 `xattr -cr FreeMD.app` 后再启动。
 >

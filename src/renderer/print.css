@@ -78,6 +78,8 @@ body {
 .markdown-body pre code {
   font-size: 8.8pt;
   font-family: "JetBrains Mono", Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .markdown-body code {
@@ -85,6 +87,13 @@ body {
   background: #f1efea;
   padding: 0 2pt;
   border-radius: 2pt;
+}
+
+.markdown-body .table-scroll {
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  margin: 0;
 }
 
 .markdown-body table {
@@ -99,6 +108,8 @@ body {
 .markdown-body td {
   border: 0.5pt solid #dedbd3;
   padding: 5pt 7pt;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .markdown-body th {

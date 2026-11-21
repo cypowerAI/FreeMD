@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('freemd', {
 
   info: () => invoke('app:info'),
   welcome: () => invoke('app:welcome'),
+  takeOpenPath: () => invoke('app:take-open-path'),
 
   getSettings: () => invoke('settings:get'),
   setSettings: (patch) => invoke('settings:set', patch),

@@ -340,6 +340,16 @@
       pre.appendChild(button);
     });
 
+    // Wide tables scroll horizontally inside their own container
+    els.preview.querySelectorAll('table').forEach((table) => {
+      const parent = table.parentElement;
+      if (parent && parent.classList && parent.classList.contains('table-scroll')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'table-scroll';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+
     // Images: lazy loading + inline detection + lightbox
     els.preview.querySelectorAll('img').forEach((img) => {
       img.loading = 'lazy';
@@ -1037,10 +1047,17 @@
     renderRecent();
     updateSaveState();
 
+    // 先挂好外部打开（第二次启动 / 文件关联）的监听，再载入欢迎文档
+    api.onOpenPath((filePath) => openDocument(filePath));
+
     const welcome = await api.welcome();
     applyDocument({ path: null, content: welcome, dir: info.rendererDir || '' });
     els.docTitle.textContent = '欢迎使用 FreeMD';
     els.dirtyFlag.textContent = '示例文档';
+
+    // 启动参数里带的文档在此领取，晚于欢迎页，不会被覆盖
+    const pendingPath = await api.takeOpenPath();
+    if (pendingPath) await openDocument(pendingPath);
 
     api.onMenuAction((action) => {
       switch (action) {
@@ -1081,8 +1098,6 @@
           break;
       }
     });
-
-    api.onOpenPath((filePath) => openDocument(filePath));
 
     api.onCloseRequest(async () => {
       if (await confirmDiscard()) api.confirmClose();

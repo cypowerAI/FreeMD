@@ -977,6 +977,20 @@ html[data-theme="dark"] .primary-btn {
   overflow-wrap: break-word;
 }
 
+/* 阅读视图（仅阅读）：正文文字列宽度占阅读区域的 75%，两侧留白居中 */
+#workspace[data-view="preview"] .markdown-body {
+  width: 75%;
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+@media (max-width: 1080px) {
+  #workspace[data-view="preview"] .markdown-body {
+    width: 92%;
+  }
+}
+
 .markdown-body > *:first-child {
   margin-top: 0;
 }
@@ -1214,17 +1228,25 @@ html[data-theme="dark"] .markdown-body code {
   border: 1px solid var(--line);
   background: var(--surface);
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
   line-height: 1.65;
 }
 
+.markdown-body pre::-webkit-scrollbar {
+  height: 8px;
+}
+
 .markdown-body pre code {
+  display: block;
   padding: 0;
   background: none;
   color: inherit;
   font-size: 13px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
+  overflow-wrap: normal;
   word-break: normal;
+  tab-size: 4;
 }
 
 .markdown-body pre .code-copy {
@@ -1251,6 +1273,35 @@ html[data-theme="dark"] .markdown-body code {
   border-color: var(--accent-line);
 }
 
+/* 宽表格在自己的容器内横向滚动，不再挤压正文 */
+.markdown-body .table-scroll {
+  margin: 1.6em 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.markdown-body .table-scroll::-webkit-scrollbar {
+  height: 9px;
+}
+
+.markdown-body .table-scroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.markdown-body .table-scroll table {
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
 .markdown-body table {
   width: 100%;
   margin: 1.6em 0;
@@ -1264,17 +1315,35 @@ html[data-theme="dark"] .markdown-body code {
   border-bottom: 1px solid var(--line-soft);
   text-align: left;
   vertical-align: top;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
 }
 
-.markdown-body th {
+/* 表头：底色与正文行区分，文字用强调色 */
+.markdown-body thead th {
   font-weight: 650;
+  color: var(--accent-ink);
+  border-bottom: 1.5px solid var(--accent-line);
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+}
+
+html[data-theme="dark"] .markdown-body thead th {
   color: var(--ink);
-  border-bottom: 1.5px solid var(--line);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+}
+
+/* 数据行单双交替配色 */
+.markdown-body tbody tr:nth-child(odd) {
+  background: var(--paper);
+}
+
+.markdown-body tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--accent-soft) 65%, var(--surface));
 }
 
 .markdown-body tbody tr:hover {
-  background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
 }
 
 .markdown-body hr {

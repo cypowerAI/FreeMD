@@ -139,11 +139,9 @@ function createWindow() {
   }
 
   mainWindow.once('ready-to-show', () => {
+    // 首个文档由渲染进程启动后主动领取（app:take-open-path），
+    // 这里不再 send，避免渲染进程尚未挂好监听时把路径丢掉。
     mainWindow.show();
-    if (pendingOpenPath) {
-      mainWindow.webContents.send('open-path', pendingOpenPath);
-      pendingOpenPath = null;
-    }
   });
 
   const persistBounds = () => {
@@ -422,6 +420,13 @@ function registerIpc() {
     } catch {
       return '# FreeMD\n\n欢迎使用 FreeMD。\n';
     }
+  });
+
+  // 启动时通过命令行 / 文件关联待打开的文档，由渲染进程就绪后主动领取。
+  ipcMain.handle('app:take-open-path', () => {
+    const filePath = pendingOpenPath;
+    pendingOpenPath = null;
+    return filePath;
   });
 
   ipcMain.handle('settings:get', () => ensureSettings());
