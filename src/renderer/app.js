@@ -472,7 +472,7 @@
         loopTextColor: ink,
         fontSize: '14px'
       },
-      flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: true },
+      flowchart: { htmlLabels: false, curve: 'stepBefore', useMaxWidth: true },
       sequence: { useMaxWidth: true },
       gantt: { useMaxWidth: true }
     };
