@@ -334,10 +334,13 @@
     const token = tokens[idx];
     const info = (token.info || '').trim();
     const lang = info.split(/\s+/)[0].toLowerCase();
-    if (lang === 'mermaid') {
+    // 围栏标注 mermaid / plantuml / puml 都进图表渲染流程：PlantUML 类图在 app.js 里转写。
+    const plantuml = lang === 'plantuml' || lang === 'puml';
+    if (lang === 'mermaid' || plantuml) {
       if (env) env.mermaidCount = (env.mermaidCount || 0) + 1;
       return (
-        '<div class="mermaid-block" data-freemd="mermaid">' +
+        '<div class="mermaid-block" data-freemd="mermaid"' +
+        `${plantuml ? ' data-diagram="plantuml"' : ''}>` +
         `<div class="mermaid">${escapeHtml(token.content)}</div>` +
         '</div>\n'
       );

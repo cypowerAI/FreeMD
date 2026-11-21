@@ -639,8 +639,180 @@
   }
 
   /**
+   * 把 PlantUML 类图转写成 Mermaid classDiagram。
+   * 只覆盖项目文档里实际用到的写法：package/class/interface/abstract/enum、
+   * 成员与方法、继承/实现/依赖/关联/组合/聚合、note；其它图种返回 null，
+   * 由调用方给出「暂不支持」的提示。
+   */
+  function plantUmlToMermaid(source) {
+    const lines = String(source).split(/\r?\n/);
+    const out = [];
+    const notes = [];
+    const stack = [];
+    let note = null;
+    let pendingMember = null;
+    const unsupported = /^(actor|participant|boundary|control|collections|database|queue|sequence|state|activity|usecase|component|artifact|node|folder|frame|cloud|storage|autonumber|activate|deactivate|alt|else|opt|loop|par|break|critical|group|end\b|skinparam\s+\w+\s+\{)/i;
+    const ident = (name) => String(name).trim().replace(/[^\w\u4e00-\u9fa5]/g, '_').replace(/^_+|_+$/g, '') || 'Group';
+
+    const relation = (line) => {
+      const match = line.match(/^([A-Za-z_]\w*)\s*(<\|--|<\|\.\.|--\|>|\.\.\|>|<--\*|<--o|<--|<\.\.|\*--|o--|--\*|--o|-->|--|\.\.>|\.\.)\s+([A-Za-z_]\w*)(?:\s*:\s*(.*))?$/);
+      if (!match) return null;
+      const [, left, token, right, label = ''] = match;
+      const text = label.replace(/\s*>\s*$/, '').replace(/"/g, '').trim();
+      const tail = text ? ` : ${text}` : '';
+      switch (token) {
+        case '<|--':
+          return `${left} <|-- ${right}${tail}`;
+        case '<|..':
+          return `${right} ..|> ${left}${tail}`;
+        case '--|>':
+          return `${right} <|-- ${left}${tail}`;
+        case '..|>':
+          return `${right} ..|> ${left}${tail}`;
+        case '<--*':
+          return `${right} *-- ${left}${tail}`;
+        case '<--o':
+          return `${right} o-- ${left}${tail}`;
+        case '<--':
+          return `${right} --> ${left}${tail}`;
+        case '<..':
+          return `${right} ..> ${left}${tail}`;
+        case '--*':
+          return `${right} *-- ${left}${tail}`;
+        case '--o':
+          return `${right} o-- ${left}${tail}`;
+        default:
+          return `${left} ${token} ${right}${tail}`;
+      }
+    };
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+      if (/^@startuml\b/i.test(line) || /^@enduml\b/i.test(line)) continue;
+      if (line.startsWith("'")) continue;
+      if (/^(skinparam|hide|show|title|caption|header|footer|scale|left to right direction)\b/i.test(line)) continue;
+      if (!note && unsupported.test(line)) return null;
+
+      if (note) {
+        if (/^end\s*note$/i.test(line)) {
+          notes.push(note);
+          note = null;
+        } else {
+          note.lines.push(line);
+        }
+        continue;
+      }
+
+      const noteStart = line.match(/^note\s+(?:(top|bottom|left|right)\s+of\s+)?([A-Za-z_]\w*)\s*$/i);
+      if (noteStart) {
+        note = { target: noteStart[2], lines: [] };
+        continue;
+      }
+      if (/^note\s+"/i.test(line)) return null;
+
+      const pkg = line.match(/^package\s+"([^"]+)"\s*\{?$/i);
+      if (pkg) {
+        out.push(`namespace ${ident(pkg[1])} {`);
+        stack.push('package');
+        continue;
+      }
+
+      const decl = line.match(/^(abstract\s+)?(class|interface|enum|struct)\s+([A-Za-z_]\w*)(?:\s+as\s+[A-Za-z_]\w*)?\s*(\{)?$/i);
+      if (decl) {
+        const [, isAbstract, kind, name, brace] = decl;
+        const stereotype = kind.toLowerCase() === 'interface'
+          ? '<<interface>>'
+          : kind.toLowerCase() === 'enum'
+            ? '<<enumeration>>'
+            : isAbstract
+              ? '<<abstract>>'
+              : '';
+        if (!brace) {
+          // 声明不带类体：有构造型就写成标注块，否则单行声明
+          if (stereotype) out.push(`class ${name} {`, `    ${stereotype}`, '}');
+          else out.push(`class ${name}`);
+          continue;
+        }
+        out.push(`class ${name} {`);
+        if (stereotype) out.push(`    ${stereotype}`);
+        stack.push({ kind: 'class', name, openIndex: out.length - (stereotype ? 2 : 1) });
+        continue;
+      }
+
+      if (line === '}') {
+        const top = stack.pop();
+        if (top && top.kind === 'class' && out.length === top.openIndex + 1) {
+          // 空类体：Mermaid 不接受空的 class 块，收成单行声明
+          out[top.openIndex] = `class ${top.name}`;
+        } else {
+          out.push('}');
+        }
+        continue;
+      }
+
+      const relationLine = stack.length === 0 ? relation(line) : null;
+
+      if (stack[stack.length - 1]?.kind === 'class') {
+        // 构造型声明（<<enumeration>> 等）原样保留，别当成成员做转义
+        if (/^<<[^<>]+>>$/.test(line)) {
+          out.push(`    ${line}`);
+          continue;
+        }
+        // 类体：成员/方法，跨行签名按括号配对收拢
+        let member = pendingMember ? `${pendingMember} ${line}` : line;
+        const balance = (member.match(/\(/g) || []).length - (member.match(/\)/g) || []).length;
+        if (balance > 0) {
+          pendingMember = member;
+          continue;
+        }
+        pendingMember = null;
+        member = member
+          .replace(/\{static\}\s*/gi, '')
+          .replace(/<<(abstract|enumeration|interface)>>/gi, (m) => m.toLowerCase())
+          .replace(/\)\s*:\s*/g, ') ')
+          .replace(/<([^<>]*)>/g, '~$1~')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (member) out.push(`    ${member}`);
+        continue;
+      }
+
+      if (relationLine) {
+        out.push(relationLine);
+        continue;
+      }
+
+      // 类外还有没识别的内容（说明文字、构造型声明等），直接忽略
+    }
+    if (note) notes.push(note);
+
+    if (!out.some((line) => /^class\b|^namespace\b/.test(line))) return null;
+
+    for (const item of notes) {
+      const text = item.lines.join('<br/>').replace(/"/g, '&quot;');
+      if (text) out.push(`note for ${item.target} "${text}"`);
+    }
+    return ['classDiagram', ...out].join('\n');
+  }
+
+  function isPlantUmlSource(code) {
+    return /^@startuml|^@enduml|^\s*skinparam\b|^\s*package\s+"/i.test(code);
+  }
+
+  /** 返回用于 Mermaid 渲染的源码；PlantUML 会先尝试转写，失败返回 null。 */
+  function mermaidSourceFor(source) {
+    const code = String(source).trim();
+    if (!isPlantUmlSource(code)) return { code, converted: false };
+    const converted = plantUmlToMermaid(code);
+    return { code: converted, converted: true };
+  }
+
+
+  /**
    * 把 .mermaid 节点里的源码交给 Mermaid 渲染成 SVG。
    * 源码保存在 dataset.src 上，切换主题时用它重新绘制。
+   * PlantUML 类图会先转写成 Mermaid，再走同一条渲染路径。
    */
   async function renderMermaidDiagrams() {
     const nodes = Array.from(els.preview.querySelectorAll('.mermaid'));
@@ -665,9 +837,22 @@
         if (node.dataset.rendered === '1') continue;
         const source = node.dataset.src != null ? node.dataset.src : node.textContent;
         node.dataset.src = source;
-        const code = source.trim();
-        if (!code) continue;
-        const cacheKey = `${themeKey}\u0000${code}`;
+        const block = mermaidBlockOf(node);
+        const rawCode = source.trim();
+        if (!rawCode) continue;
+        const code = block && block.dataset.diagram === 'plantuml' && !isPlantUmlSource(rawCode)
+          ? `@startuml\n${rawCode}\n@enduml`
+          : rawCode;
+        const prepared = mermaidSourceFor(code);
+        if (!prepared.code) {
+          markMermaidError(
+            node,
+            source,
+            new Error('暂不支持这段 PlantUML：FreeMD 内置的是离线类图转写，时序图/活动图等请改写成 Mermaid 语法')
+          );
+          continue;
+        }
+        const cacheKey = `${themeKey}\u0000${prepared.code}`;
         const cached = mermaidCache.get(cacheKey);
         if (cached) {
           node.innerHTML = cached;
@@ -678,16 +863,8 @@
           continue;
         }
         const id = `freemd-mermaid-${mermaidSeq++}`;
-        if (/^@startuml|^@enduml|^\s*skinparam\b|^\s*package\s+"/i.test(code)) {
-          markMermaidError(
-            node,
-            source,
-            new Error('这看起来是 PlantUML 语法（@startuml），FreeMD 渲染的是 Mermaid，请改写成 classDiagram 等 Mermaid 语法')
-          );
-          continue;
-        }
         try {
-          const result = await api.render(id, code);
+          const result = await api.render(id, prepared.code);
           node.innerHTML = result.svg;
           orthogonalizeClassEdges(node.querySelector('svg'));
           node.dataset.rendered = '1';
@@ -939,8 +1116,14 @@
         const node = srcNodes[index];
         const source = (node.dataset.src != null ? node.dataset.src : node.textContent).trim();
         if (!source) continue;
+        const srcBlock = mermaidBlockOf(node);
+        const code = srcBlock && srcBlock.dataset.diagram === 'plantuml' && !isPlantUmlSource(source)
+          ? `@startuml\n${source}\n@enduml`
+          : source;
+        const prepared = mermaidSourceFor(code);
+        if (!prepared.code) continue;
         try {
-          const result = await api.render(`freemd-print-${Date.now()}-${index}`, source);
+          const result = await api.render(`freemd-print-${Date.now()}-${index}`, prepared.code);
           dstNodes[index].innerHTML = result.svg;
           orthogonalizeClassEdges(dstNodes[index].querySelector('svg'));
           const block = mermaidBlockOf(dstNodes[index]);
