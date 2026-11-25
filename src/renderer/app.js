@@ -170,6 +170,25 @@
     cm.focus();
   }
 
+  // 全选只作用于当前文档：编辑器选中文档源码，阅读视图选中正文，
+  // 不把左侧导航、大纲、工具栏等界面文字纳入选区。
+  function selectAllContent() {
+    const view = els.workspace.dataset.view;
+    const focusInPreview = document.activeElement && els.previewPane.contains(document.activeElement);
+    if (view === 'preview' || (focusInPreview && view !== 'editor')) {
+      const range = document.createRange();
+      range.selectNodeContents(els.preview);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return;
+    }
+    if (!cm) return;
+    const last = cm.lastLine();
+    cm.setSelection({ line: 0, ch: 0 }, { line: last, ch: cm.getLine(last).length });
+    cm.focus();
+  }
+
   function wrapSelection(prefix, suffix, placeholder) {
     const selection = cm.getSelection() || placeholder || '';
     cm.replaceSelection(prefix + selection + suffix, 'around');
@@ -2022,6 +2041,9 @@
           break;
         case 'export-pdf':
           exportPdf();
+          break;
+        case 'select-all':
+          selectAllContent();
           break;
         case 'find':
           openFind();

@@ -245,7 +245,7 @@ function buildMenu() {
         { role: 'cut', label: '剪切' },
         { role: 'copy', label: '复制' },
         { role: 'paste', label: '粘贴' },
-        { role: 'selectAll', label: '全选' },
+        { label: '全选', accelerator: 'CmdOrCtrl+A', click: () => send('menu-action', 'select-all') },
         { type: 'separator' },
         { label: '查找', accelerator: 'CmdOrCtrl+F', click: () => send('menu-action', 'find') }
       ]

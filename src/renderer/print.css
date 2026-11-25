@@ -27,7 +27,7 @@ body {
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  color: #005940;
+  color: #29903B;
   page-break-after: avoid;
   break-after: avoid;
 }
@@ -36,14 +36,14 @@ body {
   font-size: 19pt;
   margin: 0 0 14pt;
   padding-bottom: 8pt;
-  border-bottom: 1.5pt solid #005940;
+  border-bottom: 1.5pt solid #29903B;
 }
 
 .markdown-body h2 {
   font-size: 14.5pt;
   margin: 18pt 0 8pt;
   padding-left: 8pt;
-  border-left: 3pt solid #005940;
+  border-left: 3pt solid #29903B;
 }
 
 .markdown-body h3 {
