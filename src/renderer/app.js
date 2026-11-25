@@ -530,12 +530,52 @@
   }
 
   /**
+   * 读取连线某一端标记（marker）朝所属类框一侧延伸的本体长度（SVG 用户单位）。
+   * 起始端标记本体沿路径反方向回探，结束端标记沿路径方向探出；只把朝框的
+   * 这段算进外退量，标记本体就能完整落在间隙里，不会压进或穿进类框。
+   */
+  function markerBoxExtent(svg, path, which) {
+    const attr = which === 'start' ? path.getAttribute('marker-start') : path.getAttribute('marker-end');
+    if (!attr) return 0;
+    const id = attr.replace(/^url\(#/, '').replace(/\)$/, '');
+    let marker = null;
+    try {
+      marker = svg.querySelector(`#${CSS.escape(id)}`);
+    } catch {
+      marker = svg.querySelector(`#${id}`);
+    }
+    if (!marker) return 0;
+    const refX = parseFloat(marker.getAttribute('refX')) || 0;
+    const shape = marker.querySelector('path, polygon');
+    let x0 = 0;
+    let x1 = 18;
+    if (shape) {
+      try {
+        const box = shape.getBBox();
+        x0 = box.x;
+        x1 = box.x + box.width;
+      } catch {
+        // 离屏副本拿不到包围盒时退回标记默认几何范围
+      }
+    }
+    let sw = 1;
+    try {
+      sw = parseFloat(getComputedStyle(path).strokeWidth) || 1;
+    } catch {
+      sw = 1;
+    }
+    const extent = which === 'start' ? refX - x0 : x1 - refX;
+    return Math.max(0, extent) * sw;
+  }
+
+  /**
    * 把端点吸附到最近类框的边框上，并返回该点是从哪一侧贴上去的
    * （top/bottom → 竖直进入，left/right → 水平进入）。端点再沿该侧法线
-   * 向外退一段间隙：箭头、空心/实心菱形、继承三角都画在间隙外侧，
-   * 不会压到或穿进类框边框。
+   * 向外退「标记本体朝框方向的长度 + 少量衬距」：箭头、空心/实心菱形、
+   * 继承三角都完整落在间隙外侧，不会压到或穿进类框边框。
+   * prefer 用于边角处按连线主方向优先选边，避免标记跨到相邻边框里。
    */
-  function nearestBorderPoint(rects, point) {
+  function nearestBorderPoint(rects, point, extent = 0, prefer = null) {
     let best = null;
     let bestDistance = Infinity;
     for (const rect of rects) {
@@ -548,7 +588,7 @@
       }
     }
     if (!best || bestDistance > 48) return { point, side: null };
-    const gap = 8;
+    const gap = extent + 2;
     const bx = best.x;
     const by = best.y;
     const br = best.x + best.w;
@@ -563,7 +603,11 @@
     ];
     let picked = candidates[0];
     for (const candidate of candidates) {
-      if (candidate.d < picked.d) picked = candidate;
+      if (prefer && candidate.side === prefer && picked.side !== prefer) {
+        if (candidate.d <= picked.d + 12) picked = candidate;
+      } else if (candidate.d < picked.d) {
+        picked = candidate;
+      }
     }
     const p = [...picked.point];
     if (picked.orient === 'top') p[1] -= gap;
@@ -591,8 +635,11 @@
       const dy = end[1] - start[1];
       if (Math.hypot(dx, dy) < 16) return;
       const fallbackSide = Math.abs(dy) >= Math.abs(dx) ? 'y' : 'x';
-      const snappedStart = nearestBorderPoint(rects, start);
-      const snappedEnd = nearestBorderPoint(rects, end);
+      const prefer = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+      const startExtent = markerBoxExtent(svg, path, 'start');
+      const endExtent = markerBoxExtent(svg, path, 'end');
+      const snappedStart = nearestBorderPoint(rects, start, startExtent, prefer);
+      const snappedEnd = nearestBorderPoint(rects, end, endExtent, prefer);
       const startSide = snappedStart.side || fallbackSide;
       const endSide = snappedEnd.side || fallbackSide;
       const from = snappedStart.point;
