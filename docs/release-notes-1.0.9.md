@@ -54,9 +54,9 @@ SHA256：
 
 | 文件 | SHA256 |
 | --- | --- |
-| `FreeMD-1.0.9-win-x64.exe` | `PENDING` |
-| `FreeMD-1.0.9-portable-x64.exe` | `PENDING` |
-| `FreeMD-1.0.9-linux-x64.deb` | `PENDING` |
-| `FreeMD-1.0.9-linux-x64.AppImage` | `PENDING` |
-| `FreeMD-1.0.9-mac-x64.zip` | `PENDING` |
-| `FreeMD-1.0.9-mac-arm64.zip` | `PENDING` |
+| `FreeMD-1.0.9-win-x64.exe` | `a98b73fbb6e4da81e11d0f08459bed26c07400b6ed19e8525766f0017b140568` |
+| `FreeMD-1.0.9-portable-x64.exe` | `4a07f8172ebf4e4b1e13e0b541a72a9800c2f3eb9591cebfbe0a2bddce984505` |
+| `FreeMD-1.0.9-linux-x64.deb` | `65f2b0ee63e703d3c3eb03c8b0101101282939d18c134b3021eb9dafa7095397` |
+| `FreeMD-1.0.9-linux-x64.AppImage` | `6ce578b806a28bc789238e491c5fbc34ec307a5d975011fc56268a56aa1f40b9` |
+| `FreeMD-1.0.9-mac-x64.zip` | `28d2b5320e8733db9a208804707928279ca1e5f59f303cf28fcc7c9b78cd870b` |
+| `FreeMD-1.0.9-mac-arm64.zip` | `5e3b4232609a69f9422ad5ea19f2224078d484aa9763080dde1578dc3ff9a3a3` |
