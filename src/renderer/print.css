@@ -155,13 +155,6 @@ body {
   margin: 14pt 0;
 }
 
-.markdown-body .sec-no {
-  color: #0d7a6a;
-  font-size: 0.72em;
-  margin-right: 0.4em;
-  font-family: Consolas, monospace;
-}
-
 .markdown-body .code-copy,
 .markdown-body .task-box {
   display: none;

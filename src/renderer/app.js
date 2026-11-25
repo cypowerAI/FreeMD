@@ -256,20 +256,11 @@
   function buildOutline(headings) {
     if (!headings.length) return [];
     const baseLevel = Math.min(...headings.map((h) => h.level));
-    const counters = [0, 0, 0, 0, 0, 0];
-    const entries = headings.map((heading) => {
-      const level = Math.max(1, heading.level - baseLevel + 1);
-      counters[level - 1] += 1;
-      for (let i = level; i < counters.length; i += 1) counters[i] = 0;
-      const numbers = counters.slice(0, level).filter((n) => n > 0);
-      return {
-        ...heading,
-        displayLevel: level,
-        no: numbers.join('.'),
-        children: 0
-      };
-    });
-    return entries;
+    return headings.map((heading) => ({
+      ...heading,
+      displayLevel: Math.max(1, heading.level - baseLevel + 1),
+      children: 0
+    }));
   }
 
   function renderOutline() {
@@ -292,7 +283,6 @@
       button.dataset.id = entry.id;
       button.title = entry.text;
       button.innerHTML =
-        `<span class="outline-no">${entry.no}</span>` +
         `<span class="outline-text">${MD.escapeHtml(entry.text || '（无标题）')}</span>` +
         (entry.auto ? '<span class="outline-badge">识别</span>' : '');
       button.addEventListener('click', () => jumpToSection(entry.id));
@@ -313,19 +303,6 @@
   }
 
   function decoratePreview() {
-    // Section numbering
-    if (state.settings.showSectionNumbers !== false) {
-      for (const entry of state.outline) {
-        if (entry.displayLevel > 3) continue;
-        const heading = els.preview.querySelector(`#${CSS.escape(entry.id)}`);
-        if (!heading || heading.querySelector('.sec-no')) continue;
-        const span = document.createElement('span');
-        span.className = 'sec-no';
-        span.textContent = entry.no;
-        heading.insertBefore(span, heading.firstChild);
-      }
-    }
-
     // Code block copy buttons
     els.preview.querySelectorAll('pre').forEach((pre) => {
       if (pre.querySelector('.code-copy')) return;

@@ -26,7 +26,6 @@ const DEFAULT_SETTINGS = {
   recent: [],
   lastFile: null,
   previewFontSize: 16,
-  showSectionNumbers: true,
   splitRatio: 0.52,
   sidebarWidth: 262,
   bounds: null
