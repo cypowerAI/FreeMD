@@ -386,7 +386,9 @@ async function exportPdf(payload) {
       printBackground: true,
       pageSize: 'A4',
       margins: { top: 0.6, bottom: 0.6, left: 0.65, right: 0.65 },
-      preferCSSPageSize: false
+      preferCSSPageSize: false,
+      generateTaggedPDF: true,
+      generateDocumentOutline: true
     });
     await fsp.writeFile(filePath, pdf);
     return { ok: true, path: filePath };

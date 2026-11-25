@@ -531,8 +531,9 @@
 
   /**
    * 把端点吸附到最近类框的边框上，并返回该点是从哪一侧贴上去的
-   * （top/bottom → 竖直进入，left/right → 水平进入）。dagre 给的端点会比
-   * 边框缩进几像素，只按原坐标改折线，箭头就会悬在框外。
+   * （top/bottom → 竖直进入，left/right → 水平进入）。端点再沿该侧法线
+   * 向外退一段间隙：箭头、空心/实心菱形、继承三角都画在间隙外侧，
+   * 不会压到或穿进类框边框。
    */
   function nearestBorderPoint(rects, point) {
     let best = null;
@@ -547,22 +548,29 @@
       }
     }
     if (!best || bestDistance > 48) return { point, side: null };
+    const gap = 8;
+    const bx = best.x;
+    const by = best.y;
+    const br = best.x + best.w;
+    const bb = best.y + best.h;
+    const cx = Math.min(Math.max(point[0], bx), br);
+    const cy = Math.min(Math.max(point[1], by), bb);
     const candidates = [
-      { point: [Math.min(Math.max(point[0], best.x), best.x + best.w), best.y], side: 'y' },
-      { point: [Math.min(Math.max(point[0], best.x), best.x + best.w), best.y + best.h], side: 'y' },
-      { point: [best.x, Math.min(Math.max(point[1], best.y), best.y + best.h)], side: 'x' },
-      { point: [best.x + best.w, Math.min(Math.max(point[1], best.y), best.y + best.h)], side: 'x' }
+      { side: 'y', orient: 'top', point: [cx, by], d: Math.abs(point[1] - by) },
+      { side: 'y', orient: 'bottom', point: [cx, bb], d: Math.abs(bb - point[1]) },
+      { side: 'x', orient: 'left', point: [bx, cy], d: Math.abs(point[0] - bx) },
+      { side: 'x', orient: 'right', point: [br, cy], d: Math.abs(br - point[0]) }
     ];
     let picked = candidates[0];
-    let pickedDistance = Infinity;
     for (const candidate of candidates) {
-      const distance = Math.hypot(point[0] - candidate.point[0], point[1] - candidate.point[1]);
-      if (distance < pickedDistance) {
-        pickedDistance = distance;
-        picked = candidate;
-      }
+      if (candidate.d < picked.d) picked = candidate;
     }
-    return { point: picked.point, side: picked.side };
+    const p = [...picked.point];
+    if (picked.orient === 'top') p[1] -= gap;
+    else if (picked.orient === 'bottom') p[1] += gap;
+    else if (picked.orient === 'left') p[0] -= gap;
+    else p[0] += gap;
+    return { point: p, side: picked.side };
   }
 
   /**
