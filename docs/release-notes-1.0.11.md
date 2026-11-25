@@ -52,9 +52,9 @@ SHA256：
 
 | 文件 | SHA256 |
 | --- | --- |
-| `FreeMD-1.0.11-win-x64.exe` | `PENDING` |
-| `FreeMD-1.0.11-portable-x64.exe` | `PENDING` |
-| `FreeMD-1.0.11-linux-x64.deb` | `PENDING` |
-| `FreeMD-1.0.11-linux-x64.AppImage` | `PENDING` |
-| `FreeMD-1.0.11-mac-x64.zip` | `PENDING` |
-| `FreeMD-1.0.11-mac-arm64.zip` | `PENDING` |
+| `FreeMD-1.0.11-win-x64.exe` | `67ea5f80388e414dc4e597dd5fd2ee88818a19bfde002f50c3fcc5db1d4201e8` |
+| `FreeMD-1.0.11-portable-x64.exe` | `649197ea0bdebeb3caf4f47aa1dc53c2b1a654aef797e90565fda4b6dbba919c` |
+| `FreeMD-1.0.11-linux-x64.deb` | `fa0937b9d3837d5dd2273fe0d916fa8d17f3d60956e84d48c11051ad0735f1eb` |
+| `FreeMD-1.0.11-linux-x64.AppImage` | `e8ca69c6cad8a2d5b134114e7b871a32d20acb509e1413532b0dd735fc48a9e0` |
+| `FreeMD-1.0.11-mac-x64.zip` | `371af43ebfabc76eae07a9017f0879db7b5a2a9a100d64827ebf1d4004752d08` |
+| `FreeMD-1.0.11-mac-arm64.zip` | `c3c252a2f6d6998021a937e823b55e7fad056335bd6345872b4c1efd8d2a28c9` |
