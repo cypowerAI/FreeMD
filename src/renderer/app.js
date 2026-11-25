@@ -10,6 +10,10 @@
 
   const $ = (id) => document.getElementById(id);
 
+  /** UML 标识符：去掉空白与特殊符号，转成 Mermaid 可用的节点名。 */
+  const umlIdent = (name) =>
+    String(name || '').trim().replace(/[^\w\u4e00-\u9fa5]/g, '_').replace(/^_+|_+$/g, '') || 'Entity';
+
   const els = {
     app: $('app'),
     sidebar: $('sidebar'),
@@ -604,6 +608,23 @@
     });
   }
 
+  /**
+   * 时序图后处理：Mermaid 默认在生命线两端都画参与者框/小人，这里去掉底部
+   * 重复的一组（矩形、文本、actor-man），只保留顶部，结构更贴近参考图。
+   */
+  function tidySequenceActors(svg) {
+    if (!svg || svg.getAttribute('aria-roledescription') !== 'sequence') return;
+    svg.querySelectorAll('rect.actor-bottom').forEach((rect) => rect.remove());
+    svg.querySelectorAll('.actor-man.actor-bottom').forEach((group) => group.remove());
+    const texts = [...svg.querySelectorAll('text.actor')];
+    const ys = texts.map((t) => Number(t.getAttribute('y'))).filter(Number.isFinite);
+    if (ys.length < 2) return;
+    const minY = Math.min(...ys);
+    texts.forEach((text) => {
+      if (Number(text.getAttribute('y')) - minY > 50) text.remove();
+    });
+  }
+
   function markMermaidError(node, source, error) {
     node.classList.add('is-error');
     const block = mermaidBlockOf(node);
@@ -629,38 +650,63 @@
     let note = null;
     let pendingMember = null;
     const unsupported = /^(actor|participant|boundary|control|collections|database|queue|sequence|state|activity|usecase|component|artifact|node|folder|frame|cloud|storage|autonumber|activate|deactivate|alt|else|opt|loop|par|break|critical|group|end\b|skinparam\s+\w+\s+\{)/i;
-    const ident = (name) => String(name).trim().replace(/[^\w\u4e00-\u9fa5]/g, '_').replace(/^_+|_+$/g, '') || 'Group';
 
     const relation = (line) => {
-      const match = line.match(/^([A-Za-z_]\w*)\s*(<\|--|<\|\.\.|--\|>|\.\.\|>|<--\*|<--o|<--|<\.\.|\*--|o--|--\*|--o|-->|--|\.\.>|\.\.)\s+([A-Za-z_]\w*)(?:\s*:\s*(.*))?$/);
+      const match = line.match(/^([A-Za-z_]\w*)\s*(?:"([^"]*)")?\s*(<\|--|<\|\.\.|--\|>|\.\.\|>|<--\*|<--o|<--|<\.\.|\*--|o--|--\*|--o|-->|--|\.\.>|\.\.)\s*(?:"([^"]*)")?\s*([A-Za-z_]\w*)(?:\s*:\s*(.*))?$/);
       if (!match) return null;
-      const [, left, token, right, label = ''] = match;
-      const text = label.replace(/\s*>\s*$/, '').replace(/"/g, '').trim();
-      const tail = text ? ` : ${text}` : '';
+      let [, left, leftMult, token, rightMult, right, label = ''] = match;
+      let mLeft = left;
+      let mRight = right;
+      let mLeftMult = leftMult;
+      let mRightMult = rightMult;
+      let arrow;
       switch (token) {
         case '<|--':
-          return `${left} <|-- ${right}${tail}`;
+          arrow = '<|--';
+          break;
         case '<|..':
-          return `${right} ..|> ${left}${tail}`;
+          arrow = '..|>';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '--|>':
-          return `${right} <|-- ${left}${tail}`;
+          arrow = '<|--';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '..|>':
-          return `${right} ..|> ${left}${tail}`;
+          arrow = '..|>';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '<--*':
-          return `${right} *-- ${left}${tail}`;
+          arrow = '*--';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '<--o':
-          return `${right} o-- ${left}${tail}`;
+          arrow = 'o--';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '<--':
-          return `${right} --> ${left}${tail}`;
+          arrow = '-->';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '<..':
-          return `${right} ..> ${left}${tail}`;
+          arrow = '..>';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '--*':
-          return `${right} *-- ${left}${tail}`;
+          arrow = '*--';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         case '--o':
-          return `${right} o-- ${left}${tail}`;
+          arrow = 'o--';
+          mLeft = right; mRight = left; mLeftMult = rightMult; mRightMult = leftMult;
+          break;
         default:
-          return `${left} ${token} ${right}${tail}`;
+          arrow = token;
       }
+      const mult = (value) => (value && value.trim() ? `"${value.trim()}"` : '');
+      const text = label.replace(/\s*>\s*$/, '').replace(/"/g, '').trim();
+      const tail = text ? ` : ${text}` : '';
+      return `${mLeft}${mult(mLeftMult) ? ` ${mult(mLeftMult)}` : ''} ${arrow} ${mult(mRightMult) ? `${mult(mRightMult)} ` : ''}${mRight}${tail}`;
     };
 
     for (const raw of lines) {
@@ -690,7 +736,7 @@
 
       const pkg = line.match(/^package\s+"([^"]+)"\s*\{?$/i);
       if (pkg) {
-        out.push(`namespace ${ident(pkg[1])} {`);
+        out.push(`namespace ${umlIdent(pkg[1])} {`);
         stack.push('package');
         continue;
       }
@@ -773,15 +819,202 @@
     return ['classDiagram', ...out].join('\n');
   }
 
+  /**
+   * 把 PlantUML 时序图转写成 Mermaid sequenceDiagram。
+   * 覆盖常用写法：参与者/执行者、实线/虚线/交叉箭头、返回、note、
+   * alt/opt/loop/par/break、activate/deactivate；无法识别的结构返回 null。
+   */
+  function plantUmlSequenceToMermaid(source) {
+    const lines = String(source).split(/\r?\n/);
+    const participants = new Map(); // key -> 显示名
+    const items = [];
+    let note = null;
+    let saw = false;
+
+    const addParticipant = (raw, display) => {
+      const key = umlIdent(raw);
+      if (!participants.has(key)) participants.set(key, display || key);
+      return key;
+    };
+
+    const skip = /^(@startuml|@enduml|skinparam|hide\b|show\b|title\b|caption\b|header\b|footer\b|autonumber\b|left to right direction|scale\b|'|\/\*|\*\/)/i;
+
+    const arrowMap = {
+      '->>': '->>',
+      '-->>': '-->>',
+      '->': '->>',
+      '-->': '-->>',
+      '-x': '-x',
+      '--x': '--x',
+      '<-': '->>',
+      '<--': '-->>',
+      '<-x': '-x',
+      '..>': '-->>'
+    };
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line || skip.test(line)) continue;
+
+      if (note) {
+        if (/^end\s*note$/i.test(line)) {
+          items.push({ type: 'note', pos: note.pos, target: note.target, lines: note.lines });
+          note = null;
+        } else {
+          note.lines.push(line.replace(/^"|"$/g, ''));
+        }
+        continue;
+      }
+
+      // 参与者声明：兼容 `participant A`、`participant A as "Label"`、`participant "Label" as A`
+      const decl = line.match(/^(actor|participant|boundary|control|entity|database|queue|collections)\s+(?:"([^"]+)"|([A-Za-z_]\w*))(?:\s+as\s+(?:"([^"]+)"|([A-Za-z_]\w*)))?$/i);
+      if (decl) {
+        saw = true;
+        const [, ptype, quoted1, plain1, quoted2, plain2] = decl;
+        let key;
+        let display;
+        if (quoted1) {
+          display = quoted1;
+          key = plain2 || umlIdent(quoted1);
+        } else {
+          key = plain1;
+          display = quoted2 || plain2 || plain1;
+        }
+        const finalKey = addParticipant(key, display);
+        items.push({ type: 'declare', ptype: ptype.toLowerCase(), key: finalKey, display });
+        continue;
+      }
+
+      // 单行 note（带冒号）优先于多行 note
+      const noteInline = line.match(/^note\s+(over|left of|right of)\s+([^:]+):\s*(.*)$/i);
+      if (noteInline) {
+        items.push({
+          type: 'note',
+          pos: noteInline[1].toLowerCase(),
+          target: noteInline[2].trim(),
+          lines: [noteInline[3].replace(/^"|"$/g, '')]
+        });
+        continue;
+      }
+      const noteMulti = line.match(/^note\s+(over|left of|right of)\s+(.+?)\s*$/i);
+      if (noteMulti) {
+        note = { pos: noteMulti[1].toLowerCase(), target: noteMulti[2].trim(), lines: [] };
+        continue;
+      }
+
+      // 组合片段
+      const block = line.match(/^(alt|else|opt|loop|par|break|group|and)\b(?:\s*(?:\[([^\]]*)\]|(.*)))?$/i);
+      if (block) {
+        const word = block[1].toLowerCase();
+        if (word === 'group') return null;
+        const label = (block[2] || block[3] || '').trim();
+        items.push({ type: 'block', word, label });
+        continue;
+      }
+
+      if (/^end\b/i.test(line)) {
+        items.push({ type: 'end' });
+        continue;
+      }
+
+      const activ = line.match(/^(activate|deactivate)\s+([A-Za-z_]\w*)$/i);
+      if (activ) {
+        saw = true;
+        const key = addParticipant(activ[2]);
+        items.push({ type: activ[1].toLowerCase(), key });
+        continue;
+      }
+
+      if (/^return\b/i.test(line)) continue;
+
+      // 消息箭头
+      const msg = line.match(/^([A-Za-z_]\w*)\s*(-->>|--x|->>|->|-->|-x|<-x|<--|<-|\.\.>)\s*([A-Za-z_]\w*)(?:\s*:\s*(.*))?$/i);
+      if (msg) {
+        saw = true;
+        let [, from, token, to, label = ''] = msg;
+        const arrow = arrowMap[token];
+        if (!arrow) return null;
+        if (/^</.test(token)) { const t = from; from = to; to = t; }
+        const f = addParticipant(from);
+        const t = addParticipant(to);
+        items.push({ type: 'msg', from: f, arrow, to: t, label: label.trim() });
+        continue;
+      }
+
+      // 其它图种关键字：判定为不支持，避免误转
+      if (/^(state\s+diagram|usecase|actor\s+\"|component|artifact|node\b|folder|cloud|storage|interface\s+\"|rectangle|agent|stack|queue\s+\"|database\s+\"|boundary\s+\"|control\s+\"|entity\s+\")/i.test(line)) return null;
+    }
+
+    if (!saw) return null;
+
+    const out = ['sequenceDiagram'];
+    const declared = new Set();
+    const pushDeclare = (key, display, kind) => {
+      if (declared.has(key)) return;
+      declared.add(key);
+      const kw = kind === 'actor' ? 'actor' : 'participant';
+      const label = String(display || key).replace(/^"|"$/g, '');
+      out.push(label !== key ? `${kw} ${key} as ${label}` : `${kw} ${key}`);
+    };
+    for (const item of items) {
+      if (item.type === 'declare') pushDeclare(item.key, participants.get(item.key) || item.key, item.ptype);
+    }
+    for (const [key, display] of participants) pushDeclare(key, display, 'participant');
+
+    let indent = 0;
+    const render = (item) => {
+      const pad = '    '.repeat(indent);
+      switch (item.type) {
+        case 'declare':
+          return null;
+        case 'msg': {
+          const label = item.label ? `: ${item.label.replace(/"/g, '&quot;')}` : '';
+          return `${pad}${item.from}${item.arrow}${item.to}${label}`;
+        }
+        case 'note': {
+          const text = item.lines.join('<br/>').replace(/"/g, '&quot;');
+          const pos = item.pos === 'left of' ? 'left of' : item.pos === 'right of' ? 'right of' : 'over';
+          const target = item.target.split(/\s*,\s*/).map((n) => umlIdent(n)).join(', ');
+          return `${pad}Note ${pos} ${target}: ${text}`;
+        }
+        case 'block': {
+          if (item.word === 'else' || item.word === 'and') {
+            indent = Math.max(0, indent - 1);
+            const line = `${'    '.repeat(indent)}${item.word}${item.label ? ` ${item.label}` : ''}`;
+            indent += 1;
+            return line;
+          }
+          const line = `${pad}${item.word}${item.label ? ` ${item.label}` : ''}`;
+          indent += 1;
+          return line;
+        }
+        case 'end':
+          indent = Math.max(0, indent - 1);
+          return `${'    '.repeat(indent)}end`;
+        case 'activate':
+          return `${pad}activate ${item.key}`;
+        case 'deactivate':
+          return `${pad}deactivate ${item.key}`;
+        default:
+          return null;
+      }
+    };
+    for (const item of items) {
+      const line = render(item);
+      if (line) out.push(line);
+    }
+    return out.join('\n');
+  }
+
   function isPlantUmlSource(code) {
-    return /^@startuml|^@enduml|^\s*skinparam\b|^\s*package\s+"/i.test(code);
+    return /^@startuml|^@enduml|^\s*skinparam\b|^\s*package\s+"|^\s*(actor|participant|boundary|control|entity)\s+/i.test(code);
   }
 
   /** 返回用于 Mermaid 渲染的源码；PlantUML 会先尝试转写，失败返回 null。 */
   function mermaidSourceFor(source) {
     const code = String(source).trim();
     if (!isPlantUmlSource(code)) return { code, converted: false };
-    const converted = plantUmlToMermaid(code);
+    const converted = plantUmlToMermaid(code) || plantUmlSequenceToMermaid(code);
     return { code: converted, converted: true };
   }
 
@@ -825,7 +1058,7 @@
           markMermaidError(
             node,
             source,
-            new Error('暂不支持这段 PlantUML：FreeMD 内置的是离线类图转写，时序图/活动图等请改写成 Mermaid 语法')
+            new Error('暂不支持这段 PlantUML：类图、时序图已可离线转写，活动图/状态图等其它图种请改写成 Mermaid 语法')
           );
           continue;
         }
@@ -844,6 +1077,7 @@
           const result = await api.render(id, prepared.code);
           node.innerHTML = result.svg;
           orthogonalizeClassEdges(node.querySelector('svg'));
+          tidySequenceActors(node.querySelector('svg'));
           node.dataset.rendered = '1';
           node.classList.remove('is-error');
           const block = mermaidBlockOf(node);
@@ -1103,6 +1337,7 @@
           const result = await api.render(`freemd-print-${Date.now()}-${index}`, prepared.code);
           dstNodes[index].innerHTML = result.svg;
           orthogonalizeClassEdges(dstNodes[index].querySelector('svg'));
+          tidySequenceActors(dstNodes[index].querySelector('svg'));
           const block = mermaidBlockOf(dstNodes[index]);
           if (block) block.classList.remove('is-error');
         } catch (error) {

@@ -1402,6 +1402,25 @@ html[data-theme="dark"] .markdown-body thead th {
   font-family: inherit;
 }
 
+/* 类图连线与时序图消息线加粗一档，箭头方向/线型更清楚 */
+.markdown-body .mermaid svg .edgePaths path,
+.markdown-body .mermaid svg .messageLine0,
+.markdown-body .mermaid svg .messageLine1,
+.markdown-body .mermaid svg .actor-line {
+  stroke-width: 1.6px;
+}
+
+.markdown-body .mermaid svg .edgeLabel,
+.markdown-body .mermaid svg .messageText {
+  font-size: 13px;
+}
+
+/* 时序图参与者只保留顶部框/小人，底部重复标签隐藏，结构更贴近参考图 */
+.markdown-body .mermaid svg .actor-bottom,
+.markdown-body .mermaid svg .actor-man.actor-bottom {
+  display: none;
+}
+
 .markdown-body .mermaid-block svg {
   cursor: zoom-in;
 }
