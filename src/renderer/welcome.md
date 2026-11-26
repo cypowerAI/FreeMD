@@ -128,11 +128,3 @@ sequenceDiagram
 | `Ctrl/Cmd + F` | 文档内查找 |
 | `Ctrl/Cmd + P` | 导出 PDF |
 | `Ctrl/Cmd + Shift + L` | 切换深色主题 |
-
-## 下一步
-
-- [x] 打开一份自己的 Markdown 笔记试试
-- [ ] 用 `Ctrl+Shift+O` 打开整个文件夹，在左侧树中切换文档
-- [ ] 导出 PDF，检查打印排版
-
-祝阅读愉快。

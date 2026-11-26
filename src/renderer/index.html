@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -17,10 +17,7 @@
       <aside id="sidebar">
         <div class="brand">
           <div class="brand-mark">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 5.2c0-1 .8-1.8 1.8-1.8h12.4c1 0 1.8.8 1.8 1.8v13.6c0 1-.8 1.8-1.8 1.8H5.8c-1 0-1.8-.8-1.8-1.8V5.2Z" />
-              <path d="M12 8.4v7.2M8.4 12h7.2" class="mark-plus" />
-            </svg>
+            <img src="assets/logo.png" alt="FreeMD" draggable="false" />
           </div>
           <div class="brand-text">
             <strong>FreeMD</strong>
@@ -88,15 +85,15 @@
           <div class="toolbar-right">
             <div class="segmented" id="viewSwitch">
               <button data-view="editor" title="仅编辑（Ctrl+1）">编辑</button>
-              <button data-view="split" class="is-active" title="分栏（Ctrl+2）">分栏</button>
-              <button data-view="preview" title="仅阅读（Ctrl+3）">阅读</button>
+              <button data-view="split" title="分栏（Ctrl+2）">分栏</button>
+              <button data-view="preview" class="is-active" title="仅阅读（Ctrl+3）">阅读</button>
             </div>
             <button id="exportBtn" class="ghost-btn">导出 PDF</button>
             <button id="saveBtn" class="primary-btn">保存</button>
           </div>
         </header>
 
-        <div id="workspace" data-view="split">
+        <div id="workspace" data-view="preview">
           <section id="editorPane" class="pane pane-editor">
             <div class="format-bar">
               <button data-format="h1" title="一级标题">H1</button>

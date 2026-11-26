@@ -21,8 +21,8 @@ const IS_MAC = process.platform === 'darwin';
 const MD_EXTENSIONS = ['.md', '.markdown', '.mdown', '.mkd', '.mdx', '.txt'];
 
 const DEFAULT_SETTINGS = {
-  theme: 'light',
-  view: 'split',
+  theme: 'dark',
+  view: 'preview',
   recent: [],
   lastFile: null,
   previewFontSize: 16,

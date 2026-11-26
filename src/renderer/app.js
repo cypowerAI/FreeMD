@@ -2000,8 +2000,8 @@
     if (settings.sidebarWidth) {
       document.documentElement.style.setProperty('--sidebar-width', `${settings.sidebarWidth}px`);
     }
-    setTheme(settings.theme === 'dark' ? 'dark' : 'light');
-    setView(['editor', 'split', 'preview'].includes(settings.view) ? settings.view : 'split');
+    setTheme(settings.theme === 'light' ? 'light' : 'dark');
+    setView(['editor', 'split', 'preview'].includes(settings.view) ? settings.view : 'preview');
     setSplitRatio(settings.splitRatio || 0.52);
     applyPreviewFontSize(settings.previewFontSize || 16);
 

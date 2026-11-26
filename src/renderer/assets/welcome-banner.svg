@@ -27,8 +27,8 @@
   <rect x="86" y="150" width="6" height="150" rx="3" fill="#2fd0ad"/>
   <text x="122" y="238" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="92" font-weight="700" fill="#f2f7f6" letter-spacing="-2">FreeMD</text>
   <text x="126" y="290" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="21" font-weight="500" fill="#66e2c9" letter-spacing="5.4">MARKDOWN READER &amp; EDITOR</text>
-  <text x="126" y="334" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="17" fill="#7d9599" letter-spacing="0.6">章节识别 · 公式渲染 · 图像预览 · 目录导航</text>
-  <rect x="126" y="352" width="330" height="2" fill="url(#glow)"/>
+  <text x="126" y="334" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="17" fill="#7d9599" letter-spacing="0.6">章节识别 · 公式渲染 · 图像预览 · 目录导航 · UML 支持</text>
+  <rect x="126" y="352" width="440" height="2" fill="url(#glow)"/>
 
   <!-- right: document stack -->
   <g transform="translate(760 78)">
