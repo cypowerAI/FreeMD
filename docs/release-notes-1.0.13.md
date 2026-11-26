@@ -54,9 +54,9 @@ SHA256：
 
 | 文件 | SHA256 |
 | --- | --- |
-| `FreeMD-1.0.13-win-x64.exe` | `待回填` |
-| `FreeMD-1.0.13-portable-x64.exe` | `待回填` |
-| `FreeMD-1.0.13-linux-x64.deb` | `待回填` |
-| `FreeMD-1.0.13-linux-x64.AppImage` | `待回填` |
-| `FreeMD-1.0.13-mac-x64.zip` | `待回填` |
-| `FreeMD-1.0.13-mac-arm64.zip` | `待回填` |
+| `FreeMD-1.0.13-win-x64.exe` | `54b78b733489560d0c993defe97d50a905ec7fe12d8ea18f9c5b5a21dc836cc9` |
+| `FreeMD-1.0.13-portable-x64.exe` | `08423b9784446d5aad40e3d8c01f922a03ec13efe5a9e5ac7ccde39c9d4191c6` |
+| `FreeMD-1.0.13-linux-x64.deb` | `a160e0b2fa05ae38c4358deb096c4b33ea0559224f469fc9db665e9eb9605e67` |
+| `FreeMD-1.0.13-linux-x64.AppImage` | `572f0b015cb1444c545bb02c55dcc20c9b3c293a60a3390077a0e37ee5856117` |
+| `FreeMD-1.0.13-mac-x64.zip` | `e91460199cedb26072f76453738acecc738687b147893c7c888dcdf7aeb735af` |
+| `FreeMD-1.0.13-mac-arm64.zip` | `6ecc4c7e11db4e99bfe81129c6b5fd7b7fb7bfc6b7d008b16023118afde0dc06` |
