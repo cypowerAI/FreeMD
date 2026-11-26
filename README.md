@@ -4,7 +4,7 @@
 
 FreeMD 是一个基于 Electron 的桌面应用：左栏是章节大纲与文件浏览，中间是编辑区，右侧是排版后的阅读视图。它把「读」和「写」放在同一个窗口里，滚动位置双向同步。
 
-![FreeMD 界面示意](docs/screenshot.png)
+![FreeMD 界面演示](docs/introduce.gif)
 
 ---
 
